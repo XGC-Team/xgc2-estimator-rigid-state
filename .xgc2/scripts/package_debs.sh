@@ -7,7 +7,16 @@ ROS_DISTRO="${ROS_DISTRO:-noetic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 PACKAGE="ros-noetic-xgc2-estimator-rigid-state"
-ROS_PACKAGE="estimator_rigid_state"
+ROS_PACKAGES=(
+  estimator_vrpn_px4_rotor_state
+  estimator_vrpn_ugv_state
+)
+ROS_LIBRARIES=(
+  libestimator_vrpn_px4_rotor_state_core.so
+  libestimator_vrpn_px4_rotor_state_ros.so
+  libestimator_vrpn_ugv_state_core.so
+  libestimator_vrpn_ugv_state_ros.so
+)
 
 product_version() {
   awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' "${REPO_ROOT}/.xgc2/product.yml"
@@ -67,12 +76,15 @@ copy_path() {
 pkg_root="${BUILD_DIR}/${PACKAGE}"
 mkdir -p "${pkg_root}"
 
-copy_path "${PREFIX_ROOT}/share/${ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/lib/${ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/lib/python3/dist-packages/${ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/include/${ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/lib/libestimator_rigid_state_core.so" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/lib/libestimator_rigid_state_ros.so" "${pkg_root}"
+for ros_package in "${ROS_PACKAGES[@]}"; do
+  copy_path "${PREFIX_ROOT}/share/${ros_package}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/lib/${ros_package}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/lib/python3/dist-packages/${ros_package}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/include/${ros_package}" "${pkg_root}"
+done
+for ros_library in "${ROS_LIBRARIES[@]}"; do
+  copy_path "${PREFIX_ROOT}/lib/${ros_library}" "${pkg_root}"
+done
 
 mkdir -p "${pkg_root}/DEBIAN" "${pkg_root}/usr/share/doc/${PACKAGE}"
 cat > "${pkg_root}/DEBIAN/control" <<EOF
@@ -82,8 +94,8 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: libxgc2-observer-dev (>= 0.3.3-1), libxgc2-state-machine-dev (>= 0.1.2-1~focal), ros-noetic-xgc2-ros1-utils, ros-noetic-message-runtime, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-sensor-msgs, ros-noetic-geometry-msgs
-Description: XGC2 rigid state estimation package for PX4/MAVROS UAV controllers
+Depends: libxgc2-math-dev (>= 0.4.1-1), libxgc2-state-machine-dev (>= 0.1.2-1~focal), ros-noetic-xgc2-ros1-utils, ros-noetic-message-runtime, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-sensor-msgs, ros-noetic-geometry-msgs
+Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UGVs
 EOF
 printf 'xgc2-estimator-rigid-state package\n' > "${pkg_root}/usr/share/doc/${PACKAGE}/README"
 chmod 0755 "${pkg_root}/DEBIAN"

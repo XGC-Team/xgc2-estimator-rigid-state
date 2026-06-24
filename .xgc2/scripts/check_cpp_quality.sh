@@ -31,7 +31,7 @@ require_command rsync
 if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   mapfile -d '' CXX_FILES < <(
     cd "${REPO_ROOT}"
-    find include src test -type f \
+    find estimator_vrpn_px4_rotor_state estimator_vrpn_ugv_state -type f \
       \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o \
         -name '*.h' -o -name '*.hpp' -o -name '*.hh' -o -name '*.hxx' \) \
       -print0 | sort -z
@@ -57,8 +57,8 @@ echo "Running clang-format..."
 
 WORK_DIR="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/xgc2-rigid-state-cpp-quality"
 rm -rf "${WORK_DIR}"
-mkdir -p "${WORK_DIR}/src/estimator_rigid_state"
-rsync -a --delete --exclude '.git' "${REPO_ROOT}/" "${WORK_DIR}/src/estimator_rigid_state/"
+mkdir -p "${WORK_DIR}/src/estimator-rigid-state"
+rsync -a --delete --exclude '.git' "${REPO_ROOT}/" "${WORK_DIR}/src/estimator-rigid-state/"
 
 echo "Generating compile_commands.json..."
 (
@@ -72,14 +72,17 @@ echo "Generating compile_commands.json..."
 
 echo "Running clang-tidy..."
 TIDY_SOURCES=(
-  "${WORK_DIR}/src/estimator_rigid_state/src/rigid_state_estimator_main.cpp"
-  "${WORK_DIR}/src/estimator_rigid_state/src/rigid_state_estimator_node.cpp"
-  "${WORK_DIR}/src/estimator_rigid_state/src/rigid_state_estimator_runtime.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_main.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_node.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_runtime.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_main.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_node.cpp"
+  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_runtime.cpp"
 )
 
 clang-tidy \
   -p "${WORK_DIR}/build" \
-  -header-filter="^${WORK_DIR}/src/estimator_rigid_state/(include|src|test)/" \
+  -header-filter="^${WORK_DIR}/src/estimator-rigid-state/(estimator_vrpn_px4_rotor_state|estimator_vrpn_ugv_state)/(include|src|test)/" \
   -quiet \
   "${TIDY_SOURCES[@]}"
 

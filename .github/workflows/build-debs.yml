@@ -33,7 +33,7 @@ jobs:
             clang-tidy \
             cmake \
             git \
-            libxgc2-observer-dev \
+            libxgc2-math-dev \
             libxgc2-state-machine-dev \
             rsync \
             ros-noetic-geometry-msgs \
@@ -68,7 +68,7 @@ jobs:
             build-essential \
             cmake \
             git \
-            libxgc2-observer-dev \
+            libxgc2-math-dev \
             libxgc2-state-machine-dev \
             rsync \
             ros-noetic-geometry-msgs \
@@ -86,14 +86,14 @@ jobs:
           work_dir="${RUNNER_TEMP}/estimator-rigid-state-compliance"
           install_root="${RUNNER_TEMP}/estimator-rigid-state-install-root"
           rm -rf "$work_dir" "$install_root"
-          mkdir -p "$work_dir/src/estimator_rigid_state"
-          rsync -a --delete "$GITHUB_WORKSPACE/" "$work_dir/src/estimator_rigid_state/"
+          mkdir -p "$work_dir/src/estimator-rigid-state"
+          rsync -a --delete "$GITHUB_WORKSPACE/" "$work_dir/src/estimator-rigid-state/"
 
           cd "$work_dir"
           set +u
           source /opt/ros/noetic/setup.bash
           set -u
-          catkin_make run_tests_estimator_rigid_state
+          catkin_make run_tests_estimator_vrpn_px4_rotor_state run_tests_estimator_vrpn_ugv_state
           catkin_test_results
           DESTDIR="$install_root" catkin_make install \
             -DCMAKE_INSTALL_PREFIX=/opt/ros/noetic \
@@ -101,8 +101,10 @@ jobs:
           set +u
           source devel/setup.bash
           set -u
-          test "$(rospack find estimator_rigid_state)" = "$work_dir/src/estimator_rigid_state"
-          roslaunch --files estimator_rigid_state rigid_state_estimator.launch >/tmp/xgc2-rigid-state-estimator-files.txt
+          test "$(rospack find estimator_vrpn_px4_rotor_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state"
+          test "$(rospack find estimator_vrpn_ugv_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_ugv_state"
+          roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch >/tmp/xgc2-vrpn-px4-rotor-state-estimator-files.txt
+          roslaunch --files estimator_vrpn_ugv_state vrpn_ugv_state_estimator.launch >/tmp/xgc2-vrpn-ugv-state-estimator-files.txt
 
   build-debs:
     name: Build debs (${{ matrix.arch }})

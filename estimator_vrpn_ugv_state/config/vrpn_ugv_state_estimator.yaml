@@ -1,0 +1,29 @@
+imu_topic: mavros/imu/data_raw
+vrpn_pose_topic: /vrpn_client_node/ugv1/pose
+state_topic: alg/state_estimator/state
+
+loop_rate_hz: 1000.0
+state_publish_rate_hz: 100.0
+
+field_offset_xyz: [0.0, 0.0, 0.0]
+field_offset_rpy: [0.0, 0.0, 0.0]
+body_to_vrpn_marker_xyz: [0.0, 0.0, 0.0]
+body_to_vrpn_marker_rpy: [0.0, 0.0, 0.0]
+extrinsic_verified: false
+
+imu_timeout_s: 0.2
+vrpn_timeout_s: 0.12
+coasting_timeout_s: 0.5
+min_imu_rate_hz: 5.0
+min_vrpn_rate_hz: 20.0
+max_time_jump_s: 0.25
+
+gyro_noise_std: 0.03
+accel_noise_std: 0.35
+gyro_bias_random_walk_std: 0.0001
+accel_bias_random_walk_std: 0.001
+vrpn_position_noise_std: 0.01
+vrpn_yaw_noise_std: 0.01
+innovation_position_gate_m: 1.5
+innovation_yaw_gate_rad: 0.8
+covariance_high_threshold: 100.0

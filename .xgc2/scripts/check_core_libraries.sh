@@ -24,10 +24,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 core_paths=(
-  "${REPO_ROOT}/include/estimator_rigid_state/rigid_state_estimator_runtime.h"
-  "${REPO_ROOT}/include/estimator_rigid_state/common/types.h"
-  "${REPO_ROOT}/src/rigid_state_estimator_runtime.cpp"
-  "${REPO_ROOT}/src/state_machine"
+  "${REPO_ROOT}/estimator_vrpn_px4_rotor_state/include/estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
+  "${REPO_ROOT}/estimator_vrpn_px4_rotor_state/include/estimator_vrpn_px4_rotor_state/common"
+  "${REPO_ROOT}/estimator_vrpn_px4_rotor_state/include/estimator_vrpn_px4_rotor_state/state_machine"
+  "${REPO_ROOT}/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_runtime.cpp"
+  "${REPO_ROOT}/estimator_vrpn_px4_rotor_state/src/state_machine"
+  "${REPO_ROOT}/estimator_vrpn_ugv_state/include/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_runtime.h"
+  "${REPO_ROOT}/estimator_vrpn_ugv_state/include/estimator_vrpn_ugv_state/common"
+  "${REPO_ROOT}/estimator_vrpn_ugv_state/include/estimator_vrpn_ugv_state/state_machine"
+  "${REPO_ROOT}/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_runtime.cpp"
+  "${REPO_ROOT}/estimator_vrpn_ugv_state/src/state_machine"
 )
 
 ros_source_pattern='(#include[[:space:]]*[<"][^>"]*(ros/|ros\.h|roscpp|rospy|geometry_msgs/|sensor_msgs/|std_msgs/|mavros_msgs/|diagnostic_msgs/|tf2/|tf/)[^>"]*[>"])|(^|[^[:alnum:]_])(ros::|geometry_msgs::|sensor_msgs::|std_msgs::|mavros_msgs::|diagnostic_msgs::|tf2::)'
@@ -51,6 +57,7 @@ check_core_library() {
   fi
 }
 
-check_core_library "${PREFIX}/lib/libestimator_rigid_state_core.so"
+check_core_library "${PREFIX}/lib/libestimator_vrpn_px4_rotor_state_core.so"
+check_core_library "${PREFIX}/lib/libestimator_vrpn_ugv_state_core.so"
 
 echo "Core library ROS-boundary check passed"

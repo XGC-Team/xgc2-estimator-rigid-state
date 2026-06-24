@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns" default="uav1"/>
+  <arg name="config_file" default="$(find estimator_vrpn_px4_rotor_state)/config/vrpn_px4_rotor_state_estimator.yaml"/>
+
+  <group ns="$(arg ns)">
+    <node pkg="estimator_vrpn_px4_rotor_state"
+          type="vrpn_px4_rotor_state_estimator_node"
+          name="vrpn_px4_rotor_state_estimator"
+          output="screen"
+          respawn="false"
+          clear_params="true">
+      <rosparam command="load" file="$(arg config_file)"/>
+    </node>
+  </group>
+</launch>

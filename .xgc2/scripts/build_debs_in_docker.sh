@@ -61,7 +61,7 @@ docker run --rm \
       fakeroot \
       file \
       git \
-      libxgc2-observer-dev \
+      libxgc2-math-dev \
       libxgc2-state-machine-dev \
       rsync \
       ros-noetic-geometry-msgs \
@@ -74,8 +74,8 @@ docker run --rm \
       ros-noetic-std-msgs
 
     rm -rf /workspace/work/src /workspace/work/build /workspace/work/devel /workspace/work/install-root
-    mkdir -p /workspace/work/src/estimator_rigid_state
-    rsync -a --delete /workspace/estimator-rigid-state/ /workspace/work/src/estimator_rigid_state/
+    mkdir -p /workspace/work/src/estimator-rigid-state
+    rsync -a --delete /workspace/estimator-rigid-state/ /workspace/work/src/estimator-rigid-state/
 
     cd /workspace/work
     set +u

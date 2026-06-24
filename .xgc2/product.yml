@@ -1,14 +1,15 @@
 schema: xgc2.product.v1
 id: xgc2-estimator-rigid-state
-name: XGC2 Rigid State Estimator
-version: 1.0.3-1
+name: XGC2 Rigid State Estimators
+version: 1.1.0-1
 kind: ros1-apt
-summary: Rigid-body state estimation package for PX4/MAVROS UAV controllers.
+summary: VRPN/IMU rigid state estimation packages for PX4 rotor UAVs and UGVs.
 
 ros:
   distro: noetic
   packages:
-    - estimator_rigid_state
+    - estimator_vrpn_px4_rotor_state
+    - estimator_vrpn_ugv_state
 
 apt:
   distribution: focal
@@ -17,7 +18,7 @@ apt:
   packages:
     - ros-noetic-xgc2-estimator-rigid-state
   depends:
-    - libxgc2-observer-dev (>= 0.3.3-1)
+    - libxgc2-math-dev (>= 0.4.1-1)
     - libxgc2-state-machine-dev (>= 0.1.2-1~focal)
     - ros-noetic-xgc2-ros1-utils
 
@@ -26,12 +27,18 @@ usage:
     sudo apt update
     sudo apt install ros-noetic-xgc2-estimator-rigid-state
   smoke_test: |
-    roslaunch --files estimator_rigid_state rigid_state_estimator.launch
+    roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch
+    roslaunch --files estimator_vrpn_ugv_state vrpn_ugv_state_estimator.launch
 
 ownership:
   paths:
-    - /opt/ros/noetic/share/estimator_rigid_state
-    - /opt/ros/noetic/include/estimator_rigid_state
-    - /opt/ros/noetic/lib/estimator_rigid_state
-    - /opt/ros/noetic/lib/libestimator_rigid_state_core.so
-    - /opt/ros/noetic/lib/libestimator_rigid_state_ros.so
+    - /opt/ros/noetic/share/estimator_vrpn_px4_rotor_state
+    - /opt/ros/noetic/include/estimator_vrpn_px4_rotor_state
+    - /opt/ros/noetic/lib/estimator_vrpn_px4_rotor_state
+    - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_core.so
+    - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_ros.so
+    - /opt/ros/noetic/share/estimator_vrpn_ugv_state
+    - /opt/ros/noetic/include/estimator_vrpn_ugv_state
+    - /opt/ros/noetic/lib/estimator_vrpn_ugv_state
+    - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_core.so
+    - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_ros.so
