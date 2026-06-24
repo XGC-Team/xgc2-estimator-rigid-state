@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-estimator-rigid-state
 name: XGC2 Rigid State Estimator
-version: 1.0.2-1
+version: 1.0.3-1
 kind: ros1-apt
 summary: Rigid-body state estimation package for PX4/MAVROS UAV controllers.
 

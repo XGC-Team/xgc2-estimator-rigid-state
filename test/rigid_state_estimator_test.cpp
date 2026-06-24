@@ -107,6 +107,24 @@ TEST(RigidStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenFaults) 
     EXPECT_NE(health.flags & kFault, 0u);
 }
 
+TEST(RigidStateHealthTest, DuplicateTimestampCanRemainRunningWhenSamplesAreFresh) {
+    RigidStateEstimatorConfig config = testConfig();
+    RigidStateEstimatorInput input;
+    input.imu = makeImu(10.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
+    input.imu.last_dt_sec = 0.0;
+    input.imu.estimated_rate_hz = 50.0;
+    input.vrpn_pose = makePose(10.0, Eigen::Vector3d::Zero());
+    input.vrpn_pose.last_dt_sec = 0.0;
+    input.vrpn_pose.estimated_rate_hz = 120.0;
+
+    const auto health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.0);
+    EXPECT_EQ(health.state, state_type::Running);
+    EXPECT_EQ(health.flags & kTimeJump, 0u);
+    EXPECT_EQ(health.flags & kCoasting, 0u);
+    EXPECT_TRUE(health.imu_ready);
+    EXPECT_TRUE(health.vrpn_ready);
+}
+
 }  // namespace estimator_rigid_state
 
 int main(int argc, char** argv) {

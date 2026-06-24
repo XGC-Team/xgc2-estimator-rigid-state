@@ -1,5 +1,6 @@
 #include "estimator_rigid_state/input/rigid_state_input_producer.h"
 
+#include <algorithm>
 #include <cmath>
 #include <utility>
 
@@ -8,6 +9,9 @@
 
 namespace estimator_rigid_state {
 namespace {
+
+constexpr double kTimestampDuplicateToleranceSec = 1.0e-9;
+constexpr double kMinRateDeltaSec = 1.0e-6;
 
 Eigen::Vector3d toEigen(const geometry_msgs::Vector3& value) {
     return Eigen::Vector3d(value.x, value.y, value.z);
@@ -97,17 +101,29 @@ ros::Time RigidStateInputProducer::messageStampOrNow(const ros::Time& stamp) {
 void RigidStateInputProducer::updateImuPeriod(xgc2_observer::InertialSample& sample,
                                               double stamp_sec) {
     const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
-    sample.last_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
-    sample.time_jump = has_prev && sample.last_dt_sec <= 0.0;
-    sample.estimated_rate_hz = sample.last_dt_sec > 1.0e-6 ? 1.0 / sample.last_dt_sec : 0.0;
+    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
+    const bool finite_dt = std::isfinite(raw_dt_sec);
+    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
+    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
+    if (!has_prev || sample.time_jump) {
+        sample.estimated_rate_hz = 0.0;
+    } else if (raw_dt_sec > kMinRateDeltaSec) {
+        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
+    }
 }
 
 void RigidStateInputProducer::updatePosePeriod(xgc2_observer::PoseMeasurement& sample,
                                                double stamp_sec) {
     const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
-    sample.last_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
-    sample.time_jump = has_prev && sample.last_dt_sec <= 0.0;
-    sample.estimated_rate_hz = sample.last_dt_sec > 1.0e-6 ? 1.0 / sample.last_dt_sec : 0.0;
+    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
+    const bool finite_dt = std::isfinite(raw_dt_sec);
+    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
+    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
+    if (!has_prev || sample.time_jump) {
+        sample.estimated_rate_hz = 0.0;
+    } else if (raw_dt_sec > kMinRateDeltaSec) {
+        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
+    }
 }
 
 }  // namespace estimator_rigid_state
