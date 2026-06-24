@@ -1,0 +1,37 @@
+schema: xgc2.product.v1
+id: xgc2-estimator-rigid-state
+name: XGC2 Rigid State Estimator
+version: 1.0.0-1
+kind: ros1-apt
+summary: Rigid-body state estimation package for PX4/MAVROS UAV controllers.
+
+ros:
+  distro: noetic
+  packages:
+    - estimator_rigid_state
+
+apt:
+  distribution: focal
+  install:
+    - ros-noetic-xgc2-estimator-rigid-state
+  packages:
+    - ros-noetic-xgc2-estimator-rigid-state
+  depends:
+    - libxgc2-observer-dev (>= 0.3.3-1)
+    - libxgc2-state-machine-dev
+    - ros-noetic-xgc2-ros1-utils
+
+usage:
+  install: |
+    sudo apt update
+    sudo apt install ros-noetic-xgc2-estimator-rigid-state
+  smoke_test: |
+    roslaunch --files estimator_rigid_state rigid_state_estimator.launch
+
+ownership:
+  paths:
+    - /opt/ros/noetic/share/estimator_rigid_state
+    - /opt/ros/noetic/include/estimator_rigid_state
+    - /opt/ros/noetic/lib/estimator_rigid_state
+    - /opt/ros/noetic/lib/libestimator_rigid_state_core.so
+    - /opt/ros/noetic/lib/libestimator_rigid_state_ros.so
