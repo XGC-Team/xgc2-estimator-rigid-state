@@ -103,6 +103,89 @@ TEST(VrpnUgvStateRuntimeTest, ImuEventPropagatesOnlyWhenPosted) {
     EXPECT_GT(output.state.yaw, 0.0);
 }
 
+TEST(VrpnUgvStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsState) {
+    VrpnUgvStateEstimatorRuntime runtime;
+    runtime.setConfig(testConfig());
+
+    VrpnUgvStateEstimatorInput input;
+    input.imu = makeImu(1.0, 0.0, Eigen::Vector2d::Zero());
+    input.vrpn_pose = makePose(1.0, Eigen::Vector2d::Zero(), 0.0);
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+    ASSERT_TRUE(runtime.estimator().initialized());
+
+    runtime.estimator().propagateInertial(makeImu(1.02, 0.0, Eigen::Vector2d(0.5, 0.0)));
+    const auto held_state = runtime.estimator().state();
+
+    input.vrpn_pose = makePose(1.01, Eigen::Vector2d(0.01, 0.0), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
+    runtime.processVrpnInput();
+
+    const auto output = runtime.refreshOutputSnapshot();
+    EXPECT_FALSE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kTimeAlignment);
+    EXPECT_NE(output.flags & kPoseTimeAlignmentRejected, 0u);
+    EXPECT_NE(output.flags & kVrpnSuspected, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kSuspected);
+    EXPECT_NEAR(output.state.position.x(), held_state.position.x(), 1.0e-12);
+    EXPECT_NEAR(output.state.position.y(), held_state.position.y(), 1.0e-12);
+    EXPECT_NEAR(output.state.yaw, held_state.yaw, 1.0e-12);
+}
+
+TEST(VrpnUgvStateRuntimeTest, VrpnFaultFlagsAndFilteredPoseOutputRecover) {
+    VrpnUgvStateEstimatorConfig config = testConfig();
+    config.innovation_position_gate_m = 0.1;
+    config.vrpn_health.fault_after_rejects = 2;
+    config.vrpn_health.recovery_after_accepts = 2;
+
+    VrpnUgvStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnUgvStateEstimatorInput input;
+    input.imu = makeImu(1.0, 0.0, Eigen::Vector2d::Zero());
+    input.vrpn_pose = makePose(1.0, Eigen::Vector2d::Zero(), 0.0);
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+
+    input.vrpn_pose = makePose(1.01, Eigen::Vector2d(1.0, 0.0), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
+    runtime.processVrpnInput();
+    auto output = runtime.refreshOutputSnapshot();
+    EXPECT_NE(output.flags & kInnovationRejected, 0u);
+    EXPECT_NE(output.flags & kVrpnSuspected, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kSuspected);
+    EXPECT_EQ(output.filter_health, xgc2_math::FilterHealth::kDegraded);
+
+    input.vrpn_pose = makePose(1.02, Eigen::Vector2d(1.0, 0.0), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.02), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_NE(output.flags & kVrpnFault, 0u);
+    EXPECT_NE(output.flags & kFilterImuOnly, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kFault);
+
+    input.vrpn_pose = makePose(1.03, Eigen::Vector2d::Zero(), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.03), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_FALSE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kVrpnFault);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kRecovery);
+
+    input.vrpn_pose = makePose(1.04, Eigen::Vector2d::Zero(), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.04), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_TRUE(output.last_pose_accepted);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kTrusted);
+    EXPECT_EQ(output.filter_health, xgc2_math::FilterHealth::kNominal);
+    ASSERT_TRUE(output.has_corrected_body_pose);
+    EXPECT_NEAR(output.corrected_body_pose.position.x(), output.state.position.x(), 1.0e-12);
+}
+
 TEST(VrpnUgvStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenFaults) {
     VrpnUgvStateEstimatorConfig config = testConfig();
     VrpnUgvStateEstimatorInput input;

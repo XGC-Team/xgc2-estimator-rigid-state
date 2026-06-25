@@ -35,11 +35,12 @@ inline void normalizeConfig(VrpnUgvStateEstimatorConfig& config) {
     config.innovation_position_gate_m = positiveOr(config.innovation_position_gate_m, 1.5);
     config.innovation_yaw_gate_rad = positiveOr(config.innovation_yaw_gate_rad, 0.8);
     config.covariance_high_threshold = positiveOr(config.covariance_high_threshold, 100.0);
+    config.max_propagation_dt_s = positiveOr(config.max_propagation_dt_s, 0.05);
 }
 
-inline xgc2_math::PlanarInertialEskfConfig estimatorConfigFromRuntimeConfig(
+inline xgc2_math::Pose2InertialEskfConfig estimatorConfigFromRuntimeConfig(
     const VrpnUgvStateEstimatorConfig& config) {
-    xgc2_math::PlanarInertialEskfConfig result;
+    xgc2_math::Pose2InertialEskfConfig result;
     result.measurement_frame_to_world = config.field_to_world;
     result.body_to_marker = config.body_to_vrpn_marker;
     result.estimate_extrinsic = false;
@@ -47,11 +48,14 @@ inline xgc2_math::PlanarInertialEskfConfig estimatorConfigFromRuntimeConfig(
     result.accel_noise_std = config.accel_noise_std;
     result.gyro_bias_random_walk_std = config.gyro_bias_random_walk_std;
     result.accel_bias_random_walk_std = config.accel_bias_random_walk_std;
-    result.vrpn_position_noise_std = config.vrpn_position_noise_std;
-    result.vrpn_yaw_noise_std = config.vrpn_yaw_noise_std;
+    result.pose_position_noise_std = config.vrpn_position_noise_std;
+    result.pose_yaw_noise_std = config.vrpn_yaw_noise_std;
     result.innovation_position_gate_m = config.innovation_position_gate_m;
     result.innovation_yaw_gate_rad = config.innovation_yaw_gate_rad;
     result.covariance_high_threshold = config.covariance_high_threshold;
+    result.max_propagation_dt_s = config.max_propagation_dt_s;
+    result.inertial_buffer_capacity = config.inertial_buffer_capacity;
+    result.vrpn_health = config.vrpn_health;
     return result;
 }
 

@@ -48,13 +48,18 @@ inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.innovation_position_gate_m = positiveOr(config.innovation_position_gate_m, 1.5);
     config.innovation_orientation_gate_rad =
         positiveOr(config.innovation_orientation_gate_rad, 0.8);
+    config.pose_nis_gate = positiveOr(config.pose_nis_gate, 22.5);
     config.covariance_high_threshold = positiveOr(config.covariance_high_threshold, 100.0);
-    config.max_propagation_dt_s = positiveOr(config.max_propagation_dt_s, 0.05);
+    config.max_propagation_dt_s = positiveOr(config.max_propagation_dt_s, 0.01);
     config.initial_position_variance = positiveOr(config.initial_position_variance, 0.01);
     config.initial_velocity_variance = positiveOr(config.initial_velocity_variance, 0.1);
     config.initial_orientation_variance = positiveOr(config.initial_orientation_variance, 0.01);
     config.initial_gyro_bias_variance = positiveOr(config.initial_gyro_bias_variance, 0.01);
     config.initial_accel_bias_variance = positiveOr(config.initial_accel_bias_variance, 0.1);
+    if (config.inertial_buffer_capacity == 0u) {
+        config.inertial_buffer_capacity = 1u;
+    }
+    config.inertial_buffer_capacity = std::min<std::size_t>(config.inertial_buffer_capacity, 256u);
 }
 
 }  // namespace estimator_vrpn_px4_rotor_state::config_utils

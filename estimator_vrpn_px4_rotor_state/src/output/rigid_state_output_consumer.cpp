@@ -101,6 +101,12 @@ estimator_vrpn_px4_rotor_state::RigidStateEstimate RigidStateOutputConsumer::mak
     msg.velocity = toVector3(output.state.velocity);
     msg.orientation = toQuaternion(output.state.orientation);
     msg.angular_velocity = toVector3(output.state.angular_velocity);
+    msg.vrpn_observation_state = static_cast<uint8_t>(output.vrpn_observation_state);
+    msg.filter_health = static_cast<uint8_t>(output.filter_health);
+    msg.last_pose_reject_reason = static_cast<uint8_t>(output.last_pose_reject_reason);
+    msg.last_pose_accepted = output.last_pose_accepted;
+    msg.last_fused_pose_stamp_sec = output.last_fused_pose_stamp_sec;
+    msg.vrpn_innovation_window_chi_square = output.vrpn_innovation_window_chi_square;
     return msg;
 }
 
@@ -117,7 +123,8 @@ geometry_msgs::PoseStamped RigidStateOutputConsumer::makeVisionPoseMessage(
 bool RigidStateOutputConsumer::canPublishVisionPose(
     const VrpnPx4RotorStateEstimatorOutput& output) {
     constexpr uint32_t kVisionBlockingFlags =
-        kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump | kFault | kInnovationRejected;
+        kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump | kFault | kInnovationRejected |
+        kPoseTimeAlignmentRejected | kVrpnFault | kFilterImuOnly;
     return output.has_corrected_vision_pose && (output.flags & kVisionBlockingFlags) == 0u;
 }
 

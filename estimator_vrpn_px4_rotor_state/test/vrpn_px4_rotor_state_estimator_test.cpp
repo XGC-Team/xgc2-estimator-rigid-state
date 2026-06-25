@@ -92,6 +92,97 @@ TEST(RigidStateRuntimeTest, DirectlyUsesObserverEstimatorToInitializeState) {
     EXPECT_NEAR(output.corrected_vision_pose.position.x(), 2.9, 1.0e-9);
 }
 
+TEST(RigidStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsState) {
+    VrpnPx4RotorStateEstimatorConfig config = testConfig();
+    config.innovation_position_gate_m = 1.0;
+    config.pose_nis_gate = 1.0e6;
+
+    VrpnPx4RotorStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnPx4RotorStateEstimatorInput input;
+    input.imu = makeImu(1.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
+    input.vrpn_pose = makePose(1.0, Eigen::Vector3d::Zero());
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+    ASSERT_TRUE(runtime.estimator().initialized());
+
+    runtime.estimator().propagateInertial(
+        makeImu(1.02, Eigen::Vector3d::Zero(), Eigen::Vector3d(1.0, 0.0, 9.8066)));
+    const auto held_state = runtime.estimator().state();
+
+    input.vrpn_pose = makePose(1.01, Eigen::Vector3d(0.01, 0.0, 0.0));
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
+    runtime.processVrpnInput();
+
+    const auto output = runtime.refreshOutputSnapshot();
+    EXPECT_FALSE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kTimeAlignment);
+    EXPECT_NE(output.flags & kPoseTimeAlignmentRejected, 0u);
+    EXPECT_NE(output.flags & kVrpnSuspected, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kSuspected);
+    EXPECT_NEAR(output.state.last_inertial_stamp_sec, 1.02, 1.0e-12);
+    EXPECT_NEAR(output.last_fused_pose_stamp_sec, 1.0, 1.0e-12);
+    ASSERT_TRUE(output.has_corrected_vision_pose);
+    EXPECT_NEAR(output.state.position.x(), held_state.position.x(), 1.0e-12);
+    EXPECT_NEAR(output.state.position.y(), held_state.position.y(), 1.0e-12);
+    EXPECT_NEAR(output.state.position.z(), held_state.position.z(), 1.0e-12);
+}
+
+TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
+    VrpnPx4RotorStateEstimatorConfig config = testConfig();
+    config.innovation_position_gate_m = 0.1;
+    config.vrpn_health.fault_after_rejects = 2;
+    config.vrpn_health.recovery_after_accepts = 2;
+
+    VrpnPx4RotorStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnPx4RotorStateEstimatorInput input;
+    input.imu = makeImu(1.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
+    input.vrpn_pose = makePose(1.0, Eigen::Vector3d::Zero());
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+
+    input.vrpn_pose = makePose(1.01, Eigen::Vector3d(1.0, 0.0, 0.0));
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
+    runtime.processVrpnInput();
+    auto output = runtime.refreshOutputSnapshot();
+    EXPECT_NE(output.flags & kInnovationRejected, 0u);
+    EXPECT_NE(output.flags & kVrpnSuspected, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kSuspected);
+    EXPECT_EQ(output.filter_health, xgc2_math::FilterHealth::kDegraded);
+
+    input.vrpn_pose = makePose(1.02, Eigen::Vector3d(1.0, 0.0, 0.0));
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.02), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_NE(output.flags & kVrpnFault, 0u);
+    EXPECT_NE(output.flags & kFilterImuOnly, 0u);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kFault);
+
+    input.vrpn_pose = makePose(1.03, Eigen::Vector3d::Zero());
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.03), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_FALSE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kVrpnFault);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kRecovery);
+
+    input.vrpn_pose = makePose(1.04, Eigen::Vector3d::Zero());
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.04), input).ok());
+    runtime.processVrpnInput();
+    output = runtime.refreshOutputSnapshot();
+    EXPECT_TRUE(output.last_pose_accepted);
+    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kTrusted);
+    EXPECT_EQ(output.filter_health, xgc2_math::FilterHealth::kNominal);
+    ASSERT_TRUE(output.has_corrected_vision_pose);
+    EXPECT_NEAR(output.corrected_vision_pose.position.x(), output.state.position.x(), 1.0e-12);
+}
+
 TEST(RigidStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenFaults) {
     VrpnPx4RotorStateEstimatorConfig config = testConfig();
     VrpnPx4RotorStateEstimatorInput input;
@@ -112,10 +203,10 @@ TEST(RigidStateHealthTest, DuplicateTimestampCanRemainRunningWhenSamplesAreFresh
     VrpnPx4RotorStateEstimatorInput input;
     input.imu = makeImu(10.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
     input.imu.last_dt_sec = 0.0;
-    input.imu.estimated_rate_hz = 50.0;
+    input.imu.estimated_rate_hz = config.min_imu_rate_hz + 1.0;
     input.vrpn_pose = makePose(10.0, Eigen::Vector3d::Zero());
     input.vrpn_pose.last_dt_sec = 0.0;
-    input.vrpn_pose.estimated_rate_hz = 120.0;
+    input.vrpn_pose.estimated_rate_hz = config.min_vrpn_rate_hz + 1.0;
 
     const auto health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.0);
     EXPECT_EQ(health.state, state_type::Running);

@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <estimation/planar_inertial_eskf.hpp>
+#include <xgc2_math/estimation.hpp>
 
 #include "estimator_vrpn_ugv_state/common/event_types.h"
 
@@ -22,6 +23,12 @@ enum RuntimeFlag : uint32_t {
     kCovarianceHigh = 1u << 11,
     kInvalidImu = 1u << 12,
     kInvalidVrpn = 1u << 13,
+    kPoseTimeAlignmentRejected = 1u << 14,
+    kVrpnSuspected = 1u << 15,
+    kVrpnFault = 1u << 16,
+    kVrpnRecovery = 1u << 17,
+    kFilterDegraded = 1u << 18,
+    kFilterImuOnly = 1u << 19,
 };
 
 struct VrpnUgvStateEstimatorConfig {
@@ -48,6 +55,9 @@ struct VrpnUgvStateEstimatorConfig {
     double innovation_position_gate_m{1.5};
     double innovation_yaw_gate_rad{0.8};
     double covariance_high_threshold{100.0};
+    double max_propagation_dt_s{0.05};
+    std::size_t inertial_buffer_capacity{512};
+    xgc2_math::ObservationHealthConfig vrpn_health{};
 };
 
 struct VrpnUgvStateEstimatorInput {
@@ -61,6 +71,14 @@ struct VrpnUgvStateEstimatorOutput {
     xgc2_math::PlanarRigidBodyState state{};
     xgc2_math::Pose2 corrected_body_pose{};
     bool has_corrected_body_pose{false};
+    xgc2_math::Pose2 raw_projected_body_pose{};
+    bool has_raw_projected_body_pose{false};
+    xgc2_math::VrpnObservationState vrpn_observation_state{xgc2_math::VrpnObservationState::kTrusted};
+    xgc2_math::FilterHealth filter_health{xgc2_math::FilterHealth::kLost};
+    xgc2_math::PoseFusionRejectReason last_pose_reject_reason{xgc2_math::PoseFusionRejectReason::kNone};
+    bool last_pose_accepted{false};
+    double last_fused_pose_stamp_sec{0.0};
+    double vrpn_innovation_window_chi_square{0.0};
     double stamp_sec{0.0};
 };
 

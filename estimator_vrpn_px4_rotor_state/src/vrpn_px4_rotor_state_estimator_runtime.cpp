@@ -23,9 +23,47 @@ void requireOk(const sm::Status& status, const char* operation) {
     }
 }
 
-xgc2_math::InertialPoseEskfConfig observerConfigFromRuntimeConfig(
+constexpr uint32_t kPoseFusionRuntimeFlags =
+    kInnovationRejected | kPoseTimeAlignmentRejected | kVrpnSuspected | kVrpnFault |
+    kVrpnRecovery | kFilterDegraded | kFilterImuOnly;
+
+void clearPoseFusionFlags(uint32_t& flags) {
+    flags &= ~kPoseFusionRuntimeFlags;
+}
+
+void applyObservationStateFlags(xgc2_math::VrpnObservationState state, uint32_t& flags) {
+    switch (state) {
+        case xgc2_math::VrpnObservationState::kTrusted:
+            return;
+        case xgc2_math::VrpnObservationState::kSuspected:
+            flags |= kVrpnSuspected;
+            return;
+        case xgc2_math::VrpnObservationState::kFault:
+            flags |= kVrpnFault;
+            return;
+        case xgc2_math::VrpnObservationState::kRecovery:
+            flags |= kVrpnRecovery;
+            return;
+    }
+}
+
+void applyFilterHealthFlags(xgc2_math::FilterHealth health, uint32_t& flags) {
+    switch (health) {
+        case xgc2_math::FilterHealth::kNominal:
+        case xgc2_math::FilterHealth::kLost:
+            return;
+        case xgc2_math::FilterHealth::kDegraded:
+            flags |= kFilterDegraded;
+            return;
+        case xgc2_math::FilterHealth::kImuOnly:
+            flags |= kFilterImuOnly;
+            return;
+    }
+}
+
+xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     const VrpnPx4RotorStateEstimatorConfig& config) {
-    xgc2_math::InertialPoseEskfConfig result;
+    xgc2_math::Pose3InertialEskfConfig result;
     result.gravity_mps2 = config.gravity_mps2;
     result.measurement_frame_to_world = config.field_to_world;
     result.body_to_marker = config.imu_to_vrpn_marker;
@@ -40,6 +78,7 @@ xgc2_math::InertialPoseEskfConfig observerConfigFromRuntimeConfig(
     result.extrinsic_orientation_random_walk_std = config.extrinsic_orientation_random_walk_std;
     result.innovation_position_gate_m = config.innovation_position_gate_m;
     result.innovation_orientation_gate_rad = config.innovation_orientation_gate_rad;
+    result.pose_nis_gate = config.pose_nis_gate;
     result.covariance_high_threshold = config.covariance_high_threshold;
     result.max_propagation_dt_s = config.max_propagation_dt_s;
     result.initial_position_variance = config.initial_position_variance;
@@ -47,6 +86,8 @@ xgc2_math::InertialPoseEskfConfig observerConfigFromRuntimeConfig(
     result.initial_orientation_variance = config.initial_orientation_variance;
     result.initial_gyro_bias_variance = config.initial_gyro_bias_variance;
     result.initial_accel_bias_variance = config.initial_accel_bias_variance;
+    result.inertial_buffer_capacity = config.inertial_buffer_capacity;
+    result.vrpn_health = config.vrpn_health;
     return result;
 }
 
@@ -68,6 +109,8 @@ void VrpnPx4RotorStateEstimatorRuntime::reset() {
     health_ = HealthStatus{};
     estimator_.setConfig(observerConfigFromRuntimeConfig(config_));
     estimator_flags_ = 0;
+    last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+    last_pose_accepted_ = false;
     current_time_sec_ = 0.0;
     fault_requested_ = false;
     state_ = state_type::SelfCheck;
@@ -121,6 +164,13 @@ void VrpnPx4RotorStateEstimatorRuntime::initializeIfReady() {
         return;
     }
     estimator_.initializeFromPose(input_.vrpn_pose, &input_.imu);
+    if (estimator_.initialized()) {
+        clearPoseFusionFlags(estimator_flags_);
+        applyObservationStateFlags(estimator_.vrpnObservationState(), estimator_flags_);
+        applyFilterHealthFlags(estimator_.filterHealth(), estimator_flags_);
+        last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+        last_pose_accepted_ = true;
+    }
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::processImuInput() {
@@ -128,11 +178,18 @@ void VrpnPx4RotorStateEstimatorRuntime::processImuInput() {
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::processVrpnInput() {
-    estimator_flags_ &= ~kInnovationRejected;
+    clearPoseFusionFlags(estimator_flags_);
     const auto result = estimator_.updatePose(input_.vrpn_pose);
+    last_pose_accepted_ = result.accepted;
+    last_pose_reject_reason_ = result.reject_reason;
     if (result.innovation_rejected) {
         estimator_flags_ |= kInnovationRejected;
     }
+    if (result.time_alignment_rejected) {
+        estimator_flags_ |= kPoseTimeAlignmentRejected;
+    }
+    applyObservationStateFlags(result.vrpn_observation_state, estimator_flags_);
+    applyFilterHealthFlags(result.filter_health, estimator_flags_);
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::recordStateOutput(::state_machine::StateId state,
@@ -147,6 +204,8 @@ void VrpnPx4RotorStateEstimatorRuntime::recordStateOutput(::state_machine::State
 
 void VrpnPx4RotorStateEstimatorRuntime::markInnovationRejected() {
     estimator_flags_ |= kInnovationRejected;
+    last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kInnovationGate;
+    last_pose_accepted_ = false;
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::setupMachine() {
@@ -282,9 +341,19 @@ VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::makeOutput(
     output.flags = flags;
     output.state = estimator_.state();
     output.stamp_sec = current_time_sec_;
+    output.vrpn_observation_state = estimator_.vrpnObservationState();
+    output.filter_health = estimator_.filterHealth();
+    output.last_pose_reject_reason = last_pose_reject_reason_;
+    output.last_pose_accepted = last_pose_accepted_;
+    output.last_fused_pose_stamp_sec = estimator_.lastFusedPoseStampS();
+    output.vrpn_innovation_window_chi_square = estimator_.vrpnInnovationWindowChiSquare();
     if (estimator_.hasCorrectedBodyPose()) {
         output.corrected_vision_pose = estimator_.correctedBodyPose();
         output.has_corrected_vision_pose = true;
+    }
+    if (estimator_.hasRawProjectedBodyPose()) {
+        output.raw_projected_vision_pose = estimator_.rawProjectedBodyPose();
+        output.has_raw_projected_vision_pose = true;
     }
     return output;
 }

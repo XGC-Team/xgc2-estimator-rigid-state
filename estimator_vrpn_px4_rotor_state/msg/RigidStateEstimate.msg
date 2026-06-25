@@ -18,6 +18,29 @@ uint32 FLAG_EXTRINSIC_UNVERIFIED=1024
 uint32 FLAG_COVARIANCE_HIGH=2048
 uint32 FLAG_INVALID_IMU=4096
 uint32 FLAG_INVALID_VRPN=8192
+uint32 FLAG_POSE_TIME_ALIGNMENT_REJECTED=16384
+uint32 FLAG_VRPN_SUSPECTED=32768
+uint32 FLAG_VRPN_FAULT=65536
+uint32 FLAG_VRPN_RECOVERY=131072
+uint32 FLAG_FILTER_DEGRADED=262144
+uint32 FLAG_FILTER_IMU_ONLY=524288
+
+uint8 VRPN_HEALTH_TRUSTED=0
+uint8 VRPN_HEALTH_SUSPECTED=1
+uint8 VRPN_HEALTH_FAULT=2
+uint8 VRPN_HEALTH_RECOVERY=3
+
+uint8 FILTER_HEALTH_NOMINAL=0
+uint8 FILTER_HEALTH_DEGRADED=1
+uint8 FILTER_HEALTH_IMU_ONLY=2
+uint8 FILTER_HEALTH_LOST=3
+
+uint8 REJECT_REASON_NONE=0
+uint8 REJECT_REASON_INVALID_INPUT=1
+uint8 REJECT_REASON_INNOVATION_GATE=2
+uint8 REJECT_REASON_TIME_ALIGNMENT=3
+uint8 REJECT_REASON_NUMERICAL_FAILURE=4
+uint8 REJECT_REASON_VRPN_FAULT=5
 
 std_msgs/Header header
 uint8 estimator_state
@@ -26,3 +49,9 @@ geometry_msgs/Point position
 geometry_msgs/Vector3 velocity
 geometry_msgs/Quaternion orientation
 geometry_msgs/Vector3 angular_velocity
+uint8 vrpn_observation_state
+uint8 filter_health
+uint8 last_pose_reject_reason
+bool last_pose_accepted
+float64 last_fused_pose_stamp_sec
+float64 vrpn_innovation_window_chi_square

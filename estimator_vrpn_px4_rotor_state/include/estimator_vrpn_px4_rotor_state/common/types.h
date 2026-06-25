@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <estimation/inertial_pose_eskf.hpp>
+#include <xgc2_math/estimation.hpp>
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
 
@@ -22,6 +23,12 @@ enum RuntimeFlag : uint32_t {
     kCovarianceHigh = 1u << 11,
     kInvalidImu = 1u << 12,
     kInvalidVrpn = 1u << 13,
+    kPoseTimeAlignmentRejected = 1u << 14,
+    kVrpnSuspected = 1u << 15,
+    kVrpnFault = 1u << 16,
+    kVrpnRecovery = 1u << 17,
+    kFilterDegraded = 1u << 18,
+    kFilterImuOnly = 1u << 19,
 };
 
 struct VrpnPx4RotorStateEstimatorConfig {
@@ -52,13 +59,16 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double extrinsic_orientation_random_walk_std{1.0e-5};
     double innovation_position_gate_m{1.5};
     double innovation_orientation_gate_rad{0.8};
+    double pose_nis_gate{22.5};
     double covariance_high_threshold{100.0};
-    double max_propagation_dt_s{0.05};
+    double max_propagation_dt_s{0.01};
     double initial_position_variance{0.01};
     double initial_velocity_variance{0.1};
     double initial_orientation_variance{0.01};
     double initial_gyro_bias_variance{0.01};
     double initial_accel_bias_variance{0.1};
+    std::size_t inertial_buffer_capacity{128};
+    xgc2_math::ObservationHealthConfig vrpn_health{};
 };
 
 struct VrpnPx4RotorStateEstimatorInput {
@@ -72,6 +82,14 @@ struct VrpnPx4RotorStateEstimatorOutput {
     xgc2_math::RigidBodyState state{};
     xgc2_math::Pose3 corrected_vision_pose{};
     bool has_corrected_vision_pose{false};
+    xgc2_math::Pose3 raw_projected_vision_pose{};
+    bool has_raw_projected_vision_pose{false};
+    xgc2_math::VrpnObservationState vrpn_observation_state{xgc2_math::VrpnObservationState::kTrusted};
+    xgc2_math::FilterHealth filter_health{xgc2_math::FilterHealth::kLost};
+    xgc2_math::PoseFusionRejectReason last_pose_reject_reason{xgc2_math::PoseFusionRejectReason::kNone};
+    bool last_pose_accepted{false};
+    double last_fused_pose_stamp_sec{0.0};
+    double vrpn_innovation_window_chi_square{0.0};
     double stamp_sec{0.0};
 };
 

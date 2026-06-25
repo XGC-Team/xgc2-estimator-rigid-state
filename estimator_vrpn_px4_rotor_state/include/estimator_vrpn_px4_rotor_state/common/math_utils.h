@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "estimator_vrpn_px4_rotor_state/common/types.h"
-#include "geometry/se3.hpp"
+#include "xgc2_math/geometry/se3.hpp"
 
 namespace estimator_vrpn_px4_rotor_state::math_utils {
 

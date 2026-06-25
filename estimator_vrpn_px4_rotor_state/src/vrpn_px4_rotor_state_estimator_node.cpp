@@ -138,10 +138,18 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "innovation_orientation_gate_rad",
                                 config_.innovation_orientation_gate_rad,
                                 "Orientation innovation gate");
+    ros1_utils::getParamWithLog(private_nh_, "pose_nis_gate", config_.pose_nis_gate,
+                                "Pose NIS gate");
     ros1_utils::getParamWithLog(private_nh_, "covariance_high_threshold",
                                 config_.covariance_high_threshold, "Covariance high threshold");
     ros1_utils::getParamWithLog(private_nh_, "max_propagation_dt_s", config_.max_propagation_dt_s,
                                 "Max propagation dt");
+    int inertial_buffer_capacity = static_cast<int>(config_.inertial_buffer_capacity);
+    ros1_utils::getParamWithLog(private_nh_, "inertial_buffer_capacity",
+                                inertial_buffer_capacity, "Inertial history capacity");
+    if (inertial_buffer_capacity > 0) {
+        config_.inertial_buffer_capacity = static_cast<std::size_t>(inertial_buffer_capacity);
+    }
     ros1_utils::getParamWithLog(private_nh_, "initial_position_variance",
                                 config_.initial_position_variance, "Initial position variance");
     ros1_utils::getParamWithLog(private_nh_, "initial_velocity_variance",

@@ -22,6 +22,44 @@ void requireOk(const sm::Status& status, const char* operation) {
     }
 }
 
+constexpr uint32_t kPoseFusionRuntimeFlags =
+    kInnovationRejected | kPoseTimeAlignmentRejected | kVrpnSuspected | kVrpnFault |
+    kVrpnRecovery | kFilterDegraded | kFilterImuOnly;
+
+void clearPoseFusionFlags(uint32_t& flags) {
+    flags &= ~kPoseFusionRuntimeFlags;
+}
+
+void applyObservationStateFlags(xgc2_math::VrpnObservationState state, uint32_t& flags) {
+    switch (state) {
+        case xgc2_math::VrpnObservationState::kTrusted:
+            return;
+        case xgc2_math::VrpnObservationState::kSuspected:
+            flags |= kVrpnSuspected;
+            return;
+        case xgc2_math::VrpnObservationState::kFault:
+            flags |= kVrpnFault;
+            return;
+        case xgc2_math::VrpnObservationState::kRecovery:
+            flags |= kVrpnRecovery;
+            return;
+    }
+}
+
+void applyFilterHealthFlags(xgc2_math::FilterHealth health, uint32_t& flags) {
+    switch (health) {
+        case xgc2_math::FilterHealth::kNominal:
+        case xgc2_math::FilterHealth::kLost:
+            return;
+        case xgc2_math::FilterHealth::kDegraded:
+            flags |= kFilterDegraded;
+            return;
+        case xgc2_math::FilterHealth::kImuOnly:
+            flags |= kFilterImuOnly;
+            return;
+    }
+}
+
 }  // namespace
 
 VrpnUgvStateEstimatorRuntime::VrpnUgvStateEstimatorRuntime() {
@@ -40,6 +78,8 @@ void VrpnUgvStateEstimatorRuntime::reset() {
     health_ = HealthStatus{};
     estimator_.setConfig(config_utils::estimatorConfigFromRuntimeConfig(config_));
     estimator_flags_ = 0;
+    last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+    last_pose_accepted_ = false;
     current_time_sec_ = 0.0;
     fault_requested_ = false;
     state_ = state_type::SelfCheck;
@@ -90,6 +130,13 @@ void VrpnUgvStateEstimatorRuntime::initializeIfReady() {
         return;
     }
     estimator_.initializeFromPose(input_.vrpn_pose, input_.imu.received ? &input_.imu : nullptr);
+    if (estimator_.initialized()) {
+        clearPoseFusionFlags(estimator_flags_);
+        applyObservationStateFlags(estimator_.vrpnObservationState(), estimator_flags_);
+        applyFilterHealthFlags(estimator_.filterHealth(), estimator_flags_);
+        last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+        last_pose_accepted_ = true;
+    }
 }
 
 void VrpnUgvStateEstimatorRuntime::processImuInput() {
@@ -97,15 +144,22 @@ void VrpnUgvStateEstimatorRuntime::processImuInput() {
 }
 
 void VrpnUgvStateEstimatorRuntime::processVrpnInput() {
-    estimator_flags_ &= ~kInnovationRejected;
+    clearPoseFusionFlags(estimator_flags_);
     if (!estimator_.initialized()) {
         initializeIfReady();
         return;
     }
     const auto result = estimator_.updatePose(input_.vrpn_pose);
+    last_pose_accepted_ = result.accepted;
+    last_pose_reject_reason_ = result.reject_reason;
     if (result.innovation_rejected) {
         estimator_flags_ |= kInnovationRejected;
     }
+    if (result.time_alignment_rejected) {
+        estimator_flags_ |= kPoseTimeAlignmentRejected;
+    }
+    applyObservationStateFlags(result.vrpn_observation_state, estimator_flags_);
+    applyFilterHealthFlags(result.filter_health, estimator_flags_);
 }
 
 void VrpnUgvStateEstimatorRuntime::recordStateOutput(::state_machine::StateId state,
@@ -217,9 +271,19 @@ VrpnUgvStateEstimatorOutput VrpnUgvStateEstimatorRuntime::makeOutput(::state_mac
     output.flags = flags;
     output.state = estimator_.state();
     output.stamp_sec = current_time_sec_;
+    output.vrpn_observation_state = estimator_.vrpnObservationState();
+    output.filter_health = estimator_.filterHealth();
+    output.last_pose_reject_reason = last_pose_reject_reason_;
+    output.last_pose_accepted = last_pose_accepted_;
+    output.last_fused_pose_stamp_sec = estimator_.lastFusedPoseStampS();
+    output.vrpn_innovation_window_chi_square = estimator_.vrpnInnovationWindowChiSquare();
     if (estimator_.hasCorrectedBodyPose()) {
         output.corrected_body_pose = estimator_.correctedBodyPose();
         output.has_corrected_body_pose = true;
+    }
+    if (estimator_.hasRawProjectedBodyPose()) {
+        output.raw_projected_body_pose = estimator_.rawProjectedBodyPose();
+        output.has_raw_projected_body_pose = true;
     }
     return output;
 }

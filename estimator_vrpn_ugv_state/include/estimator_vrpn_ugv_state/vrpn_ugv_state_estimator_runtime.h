@@ -53,10 +53,10 @@ class VrpnUgvStateEstimatorRuntime {
     uint32_t estimatorFlags() const {
         return estimator_flags_;
     }
-    xgc2_math::PlanarInertialEskf& estimator() {
+    xgc2_math::Pose2InertialEskf& estimator() {
         return estimator_;
     }
-    const xgc2_math::PlanarInertialEskf& estimator() const {
+    const xgc2_math::Pose2InertialEskf& estimator() const {
         return estimator_;
     }
 
@@ -73,10 +73,12 @@ class VrpnUgvStateEstimatorRuntime {
     VrpnUgvStateEstimatorConfig config_{};
     VrpnUgvStateEstimatorInput input_{};
     HealthStatus health_{};
-    xgc2_math::PlanarInertialEskf estimator_{};
+    xgc2_math::Pose2InertialEskf estimator_{};
     std::unique_ptr<::state_machine::StateMachine> machine_;
     ::state_machine::StateId state_{state_type::SelfCheck};
     uint32_t estimator_flags_{0};
+    xgc2_math::PoseFusionRejectReason last_pose_reject_reason_{xgc2_math::PoseFusionRejectReason::kNone};
+    bool last_pose_accepted_{false};
     double current_time_sec_{0.0};
     bool fault_requested_{false};
     mutable std::mutex output_mutex_;
