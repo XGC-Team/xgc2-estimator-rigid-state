@@ -12,8 +12,8 @@ dpkg -s libxgc2-math-dev >/dev/null
 dpkg -s libxgc2-state-machine-dev >/dev/null
 dpkg -s ros-noetic-xgc2-ros1-utils >/dev/null
 test -f /usr/include/xgc2_math/estimation/recursive_least_squares.hpp
-test -f /usr/include/xgc2_math/estimation/inertial_pose_eskf.hpp
-test -f /usr/include/xgc2_math/estimation/planar_inertial_eskf.hpp
+test -f /usr/include/xgc2_math/estimation/pose3_inertial_eskf.hpp
+test -f /usr/include/xgc2_math/estimation/pose2_inertial_eskf.hpp
 test -f /usr/include/state_machine/state_machine.hpp
 test -f /usr/include/state_machine/runtime/event_dispatcher.hpp
 test "$(rospack find estimator_vrpn_px4_rotor_state)" = "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state"
