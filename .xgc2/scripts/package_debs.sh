@@ -94,7 +94,7 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: libxgc2-math-dev (>= 0.4.1-1), libxgc2-state-machine-dev (>= 0.1.2-1~focal), ros-noetic-xgc2-ros1-utils, ros-noetic-message-runtime, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-sensor-msgs, ros-noetic-geometry-msgs
+Depends: libxgc2-math-dev (>= 0.5.2-1), libxgc2-state-machine-dev (>= 0.1.2-1~focal), ros-noetic-xgc2-ros1-utils, ros-noetic-message-runtime, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-sensor-msgs, ros-noetic-geometry-msgs
 Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UGVs
 EOF
 printf 'xgc2-estimator-rigid-state package\n' > "${pkg_root}/usr/share/doc/${PACKAGE}/README"

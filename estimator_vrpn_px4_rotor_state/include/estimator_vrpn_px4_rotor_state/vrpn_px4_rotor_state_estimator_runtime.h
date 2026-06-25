@@ -80,7 +80,8 @@ class VrpnPx4RotorStateEstimatorRuntime {
     std::unique_ptr<::state_machine::StateMachine> machine_;
     ::state_machine::StateId state_{state_type::SelfCheck};
     uint32_t estimator_flags_{0};
-    xgc2_math::PoseFusionRejectReason last_pose_reject_reason_{xgc2_math::PoseFusionRejectReason::kNone};
+    xgc2_math::PoseFusionRejectReason last_pose_reject_reason_{
+        xgc2_math::PoseFusionRejectReason::kNone};
     bool last_pose_accepted_{false};
     double current_time_sec_{0.0};
     bool fault_requested_{false};

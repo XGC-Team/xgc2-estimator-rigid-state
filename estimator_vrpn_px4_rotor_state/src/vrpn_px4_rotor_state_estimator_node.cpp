@@ -145,8 +145,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "max_propagation_dt_s", config_.max_propagation_dt_s,
                                 "Max propagation dt");
     int inertial_buffer_capacity = static_cast<int>(config_.inertial_buffer_capacity);
-    ros1_utils::getParamWithLog(private_nh_, "inertial_buffer_capacity",
-                                inertial_buffer_capacity, "Inertial history capacity");
+    ros1_utils::getParamWithLog(private_nh_, "inertial_buffer_capacity", inertial_buffer_capacity,
+                                "Inertial history capacity");
     if (inertial_buffer_capacity > 0) {
         config_.inertial_buffer_capacity = static_cast<std::size_t>(inertial_buffer_capacity);
     }

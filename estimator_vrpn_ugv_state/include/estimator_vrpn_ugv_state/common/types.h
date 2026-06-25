@@ -66,20 +66,22 @@ struct VrpnUgvStateEstimatorInput {
 };
 
 struct VrpnUgvStateEstimatorOutput {
-    uint8_t estimator_state{state_type::SelfCheck};
-    uint32_t flags{0};
-    xgc2_math::PlanarRigidBodyState state{};
     xgc2_math::Pose2 corrected_body_pose{};
-    bool has_corrected_body_pose{false};
     xgc2_math::Pose2 raw_projected_body_pose{};
-    bool has_raw_projected_body_pose{false};
-    xgc2_math::VrpnObservationState vrpn_observation_state{xgc2_math::VrpnObservationState::kTrusted};
-    xgc2_math::FilterHealth filter_health{xgc2_math::FilterHealth::kLost};
-    xgc2_math::PoseFusionRejectReason last_pose_reject_reason{xgc2_math::PoseFusionRejectReason::kNone};
-    bool last_pose_accepted{false};
+    xgc2_math::PlanarRigidBodyState state{};
     double last_fused_pose_stamp_sec{0.0};
     double vrpn_innovation_window_chi_square{0.0};
     double stamp_sec{0.0};
+    uint32_t flags{0};
+    xgc2_math::VrpnObservationState vrpn_observation_state{
+        xgc2_math::VrpnObservationState::kTrusted};
+    xgc2_math::FilterHealth filter_health{xgc2_math::FilterHealth::kLost};
+    xgc2_math::PoseFusionRejectReason last_pose_reject_reason{
+        xgc2_math::PoseFusionRejectReason::kNone};
+    uint8_t estimator_state{state_type::SelfCheck};
+    bool has_corrected_body_pose{false};
+    bool has_raw_projected_body_pose{false};
+    bool last_pose_accepted{false};
 };
 
 struct HealthStatus {

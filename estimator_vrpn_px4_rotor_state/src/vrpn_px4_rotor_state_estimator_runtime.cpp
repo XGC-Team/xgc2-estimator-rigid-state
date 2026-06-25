@@ -23,9 +23,9 @@ void requireOk(const sm::Status& status, const char* operation) {
     }
 }
 
-constexpr uint32_t kPoseFusionRuntimeFlags =
-    kInnovationRejected | kPoseTimeAlignmentRejected | kVrpnSuspected | kVrpnFault |
-    kVrpnRecovery | kFilterDegraded | kFilterImuOnly;
+constexpr uint32_t kPoseFusionRuntimeFlags = kInnovationRejected | kPoseTimeAlignmentRejected |
+                                             kVrpnSuspected | kVrpnFault | kVrpnRecovery |
+                                             kFilterDegraded | kFilterImuOnly;
 
 void clearPoseFusionFlags(uint32_t& flags) {
     flags &= ~kPoseFusionRuntimeFlags;
