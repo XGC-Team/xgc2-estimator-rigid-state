@@ -122,9 +122,9 @@ geometry_msgs::PoseStamped RigidStateOutputConsumer::makeVisionPoseMessage(
 
 bool RigidStateOutputConsumer::canPublishVisionPose(
     const VrpnPx4RotorStateEstimatorOutput& output) {
-    constexpr uint32_t kVisionBlockingFlags =
-        kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump | kFault | kInnovationRejected |
-        kPoseTimeAlignmentRejected | kVrpnFault | kFilterImuOnly;
+    constexpr uint32_t kVisionBlockingFlags = kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump |
+                                              kFault | kPoseTimeAlignmentRejected | kVrpnFault |
+                                              kFilterImuOnly;
     return output.has_corrected_vision_pose && (output.flags & kVisionBlockingFlags) == 0u;
 }
 

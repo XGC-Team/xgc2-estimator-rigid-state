@@ -26,6 +26,9 @@ class VrpnPx4RotorStateEstimatorNode {
    private:
     void loadParams();
     void dispatchOutputEvents(const std::vector<::state_machine::Event>& events);
+    void publishStateTimerCallback(const ros::TimerEvent& event);
+    void dispatchTimerOutputEvent(::state_machine::EventId event_id, const ros::Time& stamp,
+                                  const char* source);
 
     ros::NodeHandle& nh_;
     ros::NodeHandle private_nh_;
@@ -33,6 +36,7 @@ class VrpnPx4RotorStateEstimatorNode {
     ::state_machine::runtime::AsyncTaskExecutor<ros::NodeHandle> output_event_executor_;
     ::state_machine::runtime::EventDispatcher output_event_dispatcher_;
     std::unique_ptr<RigidStateInputProducer> input_producer_;
+    ros::Timer state_publish_timer_;
 
     VrpnPx4RotorStateEstimatorConfig config_{};
     std::string imu_topic_{"mavros/imu/data_raw"};

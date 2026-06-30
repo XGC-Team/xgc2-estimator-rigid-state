@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "estimator_vrpn_px4_rotor_state/common/config_utils.h"
+#include "estimator_vrpn_px4_rotor_state/common/event_types.h"
 #include "estimator_vrpn_px4_rotor_state/common/math_utils.h"
 
 namespace estimator_vrpn_px4_rotor_state {
@@ -41,6 +42,10 @@ VrpnPx4RotorStateEstimatorNode::VrpnPx4RotorStateEstimatorNode(ros::NodeHandle& 
 
     input_producer_ = std::make_unique<RigidStateInputProducer>(
         nh_, imu_topic_, vrpn_pose_topic_, kRosQueueSize, std::move(post_input_event));
+
+    state_publish_timer_ =
+        nh_.createTimer(ros::Duration(1.0 / config_.state_publish_rate_hz),
+                        &VrpnPx4RotorStateEstimatorNode::publishStateTimerCallback, this);
 
     output_event_executor_.start();
 
@@ -168,7 +173,18 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
 
 void VrpnPx4RotorStateEstimatorNode::dispatchOutputEvents(
     const std::vector<::state_machine::Event>& events) {
-    const auto result = output_event_dispatcher_.dispatch(events);
+    std::vector<::state_machine::Event> filtered_events;
+    filtered_events.reserve(events.size());
+    for (const auto& event : events) {
+        if (event.id == output_event_type::PUBLISH_STATE) {
+            continue;
+        }
+        filtered_events.push_back(event);
+    }
+    if (filtered_events.empty()) {
+        return;
+    }
+    const auto result = output_event_dispatcher_.dispatch(filtered_events);
     for (const auto& event : result.unhandled_events) {
         ROS_WARN("[VrpnPx4RotorStateEstimatorNode] Unhandled output event id: %u",
                  static_cast<unsigned>(event.id));
@@ -177,6 +193,26 @@ void VrpnPx4RotorStateEstimatorNode::dispatchOutputEvents(
         ROS_WARN("[VrpnPx4RotorStateEstimatorNode] Output consumer '%s' failed on event %u: %s",
                  failure.consumer_name.c_str(), static_cast<unsigned>(failure.event.id),
                  failure.message.c_str());
+    }
+}
+
+void VrpnPx4RotorStateEstimatorNode::publishStateTimerCallback(const ros::TimerEvent& event) {
+    dispatchTimerOutputEvent(output_event_type::PUBLISH_STATE, event.current_real,
+                             "state_publish_timer");
+}
+
+void VrpnPx4RotorStateEstimatorNode::dispatchTimerOutputEvent(::state_machine::EventId event_id,
+                                                              const ros::Time& stamp,
+                                                              const char* source) {
+    ::state_machine::Event event(event_id, ::state_machine::EventTimestamp{stamp.toSec()});
+    event.category = ::state_machine::EventCategory::kOutput;
+    event.source = source;
+    const auto result = output_event_dispatcher_.dispatch({event});
+    for (const auto& failure : result.failures) {
+        ROS_WARN(
+            "[VrpnPx4RotorStateEstimatorNode] Timer output consumer '%s' failed on event %u: %s",
+            failure.consumer_name.c_str(), static_cast<unsigned>(failure.event.id),
+            failure.message.c_str());
     }
 }
 
