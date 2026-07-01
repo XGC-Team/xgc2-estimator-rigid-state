@@ -1,5 +1,6 @@
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <utility>

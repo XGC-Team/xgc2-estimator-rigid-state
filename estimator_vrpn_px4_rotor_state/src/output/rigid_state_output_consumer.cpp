@@ -101,6 +101,9 @@ estimator_vrpn_px4_rotor_state::RigidStateEstimate RigidStateOutputConsumer::mak
     msg.velocity = toVector3(output.state.velocity);
     msg.orientation = toQuaternion(output.state.orientation);
     msg.angular_velocity = toVector3(output.state.angular_velocity);
+    msg.linear_acceleration = toVector3(output.state.linear_acceleration);
+    msg.gravity = toVector3(output.state.gravity);
+    msg.accel_bias = toVector3(output.state.accel_bias);
     msg.vrpn_observation_state = static_cast<uint8_t>(output.vrpn_observation_state);
     msg.filter_health = static_cast<uint8_t>(output.filter_health);
     msg.last_pose_reject_reason = static_cast<uint8_t>(output.last_pose_reject_reason);

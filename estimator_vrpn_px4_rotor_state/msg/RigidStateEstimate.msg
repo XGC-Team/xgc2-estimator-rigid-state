@@ -49,6 +49,9 @@ geometry_msgs/Point position
 geometry_msgs/Vector3 velocity
 geometry_msgs/Quaternion orientation
 geometry_msgs/Vector3 angular_velocity
+geometry_msgs/Vector3 linear_acceleration
+geometry_msgs/Vector3 gravity
+geometry_msgs/Vector3 accel_bias
 uint8 vrpn_observation_state
 uint8 filter_health
 uint8 last_pose_reject_reason

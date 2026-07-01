@@ -73,21 +73,16 @@ TEST(RigidStateRuntimeTest, DirectlyUsesObserverEstimatorToInitializeState) {
     VrpnPx4RotorStateEstimatorRuntime runtime;
     runtime.setConfig(config);
 
-    VrpnPx4RotorStateEstimatorInput input;
-    input.imu = makeImu(1.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
-    input.vrpn_pose = makePose(1.0, Eigen::Vector3d(2.0, 0.0, 1.0));
-
-    const auto status =
-        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.0), input);
-    ASSERT_TRUE(status.ok()) << status.message;
-    runtime.update(1.0);
-    runtime.update(1.01);
+    const auto imu = makeImu(1.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
+    const auto pose = makePose(1.0, Eigen::Vector3d(2.0, 0.0, 1.0));
+    runtime.estimator().initializeFromPose(pose, &imu);
 
     ASSERT_TRUE(runtime.estimator().initialized());
     const auto output = runtime.refreshOutputSnapshot();
     EXPECT_NEAR(output.state.position.x(), 2.9, 1.0e-9);
     EXPECT_NEAR(output.state.position.y(), 2.0, 1.0e-9);
     EXPECT_NEAR(output.state.position.z(), 4.0, 1.0e-9);
+    EXPECT_NEAR(output.state.linear_acceleration.norm(), 0.0, 1.0e-9);
     ASSERT_TRUE(output.has_corrected_vision_pose);
     EXPECT_NEAR(output.corrected_vision_pose.position.x(), 2.9, 1.0e-9);
 }
