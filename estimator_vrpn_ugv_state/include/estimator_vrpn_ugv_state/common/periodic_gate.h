@@ -10,12 +10,22 @@ class PeriodicGate {
         if (!std::isfinite(now_sec) || !std::isfinite(period_sec) || period_sec <= 0.0) {
             return false;
         }
-        if (!initialized_ || now_sec < last_fire_sec_ || now_sec - last_fire_sec_ >= period_sec) {
+        if (!initialized_ || now_sec < last_fire_sec_) {
             last_fire_sec_ = now_sec;
             initialized_ = true;
             return true;
         }
-        return false;
+        if (now_sec - last_fire_sec_ < period_sec) {
+            return false;
+        }
+        if (now_sec - last_fire_sec_ > 10.0 * period_sec) {
+            last_fire_sec_ = now_sec;
+        } else {
+            while (now_sec - last_fire_sec_ >= period_sec) {
+                last_fire_sec_ += period_sec;
+            }
+        }
+        return true;
     }
 
     void reset() {
