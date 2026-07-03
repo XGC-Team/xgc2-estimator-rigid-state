@@ -32,8 +32,7 @@ RunningState::RunningState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_(run
     if (runtime_.health().state != state_type::Running) {
         return {};
     }
-    runtime_.recordStateOutput(state_type::Running,
-                               runtime_.health().flags | runtime_.estimatorFlags());
+    runtime_.recordStateOutput(state_type::Running, runtime_.outputFlags());
     emitOutputIfDue(ctx);
     return {};
 }

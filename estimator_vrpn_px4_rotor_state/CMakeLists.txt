@@ -32,6 +32,29 @@ catkin_package(
   DEPENDS EIGEN3
 )
 
+set(PRIVATE_GENERATED_INCLUDE_DIR
+  ${CMAKE_CURRENT_BINARY_DIR}/private_generated_include
+)
+set(PRIVATE_RIGID_STATE_HEADER
+  ${PRIVATE_GENERATED_INCLUDE_DIR}/${PROJECT_NAME}/RigidStateEstimate.h
+)
+
+add_custom_command(
+  OUTPUT ${PRIVATE_RIGID_STATE_HEADER}
+  COMMAND ${CMAKE_COMMAND} -E make_directory
+          ${PRIVATE_GENERATED_INCLUDE_DIR}/${PROJECT_NAME}
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}/RigidStateEstimate.h
+          ${PRIVATE_RIGID_STATE_HEADER}
+  DEPENDS ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}/RigidStateEstimate.h
+)
+add_custom_target(${PROJECT_NAME}_private_generated_headers
+  DEPENDS ${PRIVATE_RIGID_STATE_HEADER}
+)
+add_dependencies(${PROJECT_NAME}_private_generated_headers
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+)
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -63,10 +86,15 @@ add_library(estimator_vrpn_px4_rotor_state_ros
   src/output/rigid_state_output_consumer.cpp
 )
 add_dependencies(estimator_vrpn_px4_rotor_state_ros
+  ${PROJECT_NAME}_private_generated_headers
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_compile_features(estimator_vrpn_px4_rotor_state_ros PUBLIC cxx_std_17)
+target_include_directories(estimator_vrpn_px4_rotor_state_ros
+  BEFORE PRIVATE
+  ${PRIVATE_GENERATED_INCLUDE_DIR}
+)
 target_link_libraries(estimator_vrpn_px4_rotor_state_ros
   estimator_vrpn_px4_rotor_state_core
   xgc2_state_machine::state_machine
@@ -77,10 +105,15 @@ add_executable(vrpn_px4_rotor_state_estimator_node
   src/vrpn_px4_rotor_state_estimator_main.cpp
 )
 add_dependencies(vrpn_px4_rotor_state_estimator_node
+  ${PROJECT_NAME}_private_generated_headers
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_compile_features(vrpn_px4_rotor_state_estimator_node PUBLIC cxx_std_17)
+target_include_directories(vrpn_px4_rotor_state_estimator_node
+  BEFORE PRIVATE
+  ${PRIVATE_GENERATED_INCLUDE_DIR}
+)
 target_link_libraries(vrpn_px4_rotor_state_estimator_node
   estimator_vrpn_px4_rotor_state_ros
   ${catkin_LIBRARIES}

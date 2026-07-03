@@ -62,6 +62,10 @@ void applyFilterHealthFlags(xgc2_math::FilterHealth health, uint32_t& flags) {
     }
 }
 
+uint32_t mergedOutputFlags(uint32_t health_flags, uint32_t estimator_flags) {
+    return (health_flags & ~kPoseFusionRuntimeFlags) | estimator_flags;
+}
+
 xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     const VrpnPx4RotorStateEstimatorConfig& config) {
     xgc2_math::Pose3InertialEskfConfig result;
@@ -73,12 +77,14 @@ xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     result.gyro_noise_std = config.gyro_noise_std;
     result.pose_position_noise_std = config.vrpn_position_noise_std;
     result.pose_orientation_noise_std = config.vrpn_orientation_noise_std;
+    result.velocity_noise_std = config.vrpn_velocity_noise_std;
     result.gyro_bias_random_walk_std = config.gyro_bias_random_walk_std;
     result.accel_bias_random_walk_std = config.accel_bias_random_walk_std;
     result.extrinsic_position_random_walk_std = config.extrinsic_position_random_walk_std;
     result.extrinsic_orientation_random_walk_std = config.extrinsic_orientation_random_walk_std;
     result.innovation_position_gate_m = config.innovation_position_gate_m;
     result.innovation_orientation_gate_rad = config.innovation_orientation_gate_rad;
+    result.velocity_innovation_gate_mps = config.velocity_innovation_gate_mps;
     result.pose_nis_gate = config.pose_nis_gate;
     result.covariance_high_threshold = config.covariance_high_threshold;
     result.max_propagation_dt_s = config.max_propagation_dt_s;
@@ -111,6 +117,7 @@ void VrpnPx4RotorStateEstimatorRuntime::reset() {
     estimator_.setConfig(observerConfigFromRuntimeConfig(config_));
     estimator_flags_ = 0;
     last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+    last_pose_update_result_ = xgc2_math::Pose3InertialEskf::PoseUpdateResult{};
     last_pose_accepted_ = false;
     current_time_sec_ = 0.0;
     fault_requested_ = false;
@@ -126,7 +133,23 @@ sm::Status VrpnPx4RotorStateEstimatorRuntime::postInputEvent(
     sm::Event event, const VrpnPx4RotorStateEstimatorInput& input) {
     input_ = input;
     event.category = sm::EventCategory::kInput;
-    return machine_->postEvent(std::move(event));
+    if (event.timestamp > 0.0) {
+        current_time_sec_ = event.timestamp;
+    }
+    auto post_status = machine_->postEvent(std::move(event));
+    if (!post_status.ok()) {
+        return post_status;
+    }
+
+    const auto update_result = machine_->update({64, 64, false});
+    if (!update_result.status.ok()) {
+        fault_requested_ = true;
+        state_ = state_type::Fault;
+        estimator_flags_ |= kFault;
+        recordStateOutput(state_, outputFlags());
+        return update_result.status;
+    }
+    return {};
 }
 
 VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::update(double now_sec) {
@@ -138,7 +161,7 @@ VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::update(doubl
         fault_requested_ = true;
         state_ = state_type::Fault;
         estimator_flags_ |= kFault;
-        recordStateOutput(state_, health_.flags | estimator_flags_);
+        recordStateOutput(state_, outputFlags());
     }
     return snapshotOutput();
 }
@@ -149,8 +172,12 @@ VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::snapshotOutp
 }
 
 VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::refreshOutputSnapshot() {
-    recordStateOutput(state_, health_.flags | estimator_flags_);
+    recordStateOutput(state_, outputFlags());
     return snapshotOutput();
+}
+
+uint32_t VrpnPx4RotorStateEstimatorRuntime::outputFlags() const {
+    return mergedOutputFlags(health_.flags, estimator_flags_);
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::enterState(::state_machine::StateId state) {
@@ -170,6 +197,12 @@ void VrpnPx4RotorStateEstimatorRuntime::initializeIfReady() {
         applyObservationStateFlags(estimator_.vrpnObservationState(), estimator_flags_);
         applyFilterHealthFlags(estimator_.filterHealth(), estimator_flags_);
         last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+        last_pose_update_result_ = xgc2_math::Pose3InertialEskf::PoseUpdateResult{};
+        last_pose_update_result_.accepted = true;
+        last_pose_update_result_.filter_health = estimator_.filterHealth();
+        last_pose_update_result_.vrpn_observation_state = estimator_.vrpnObservationState();
+        last_pose_update_result_.innovation_window_chi_square =
+            estimator_.vrpnInnovationWindowChiSquare();
         last_pose_accepted_ = true;
     }
 }
@@ -181,6 +214,7 @@ void VrpnPx4RotorStateEstimatorRuntime::processImuInput() {
 void VrpnPx4RotorStateEstimatorRuntime::processVrpnInput() {
     clearPoseFusionFlags(estimator_flags_);
     const auto result = estimator_.updatePose(input_.vrpn_pose);
+    last_pose_update_result_ = result;
     last_pose_accepted_ = result.accepted;
     last_pose_reject_reason_ = result.reject_reason;
     if (result.innovation_rejected) {
@@ -191,6 +225,10 @@ void VrpnPx4RotorStateEstimatorRuntime::processVrpnInput() {
     }
     applyObservationStateFlags(result.vrpn_observation_state, estimator_flags_);
     applyFilterHealthFlags(result.filter_health, estimator_flags_);
+}
+
+void VrpnPx4RotorStateEstimatorRuntime::processVrpnVelocityInput() {
+    (void)estimator_.updateVelocity(input_.vrpn_velocity);
 }
 
 void VrpnPx4RotorStateEstimatorRuntime::recordStateOutput(::state_machine::StateId state,
@@ -206,6 +244,13 @@ void VrpnPx4RotorStateEstimatorRuntime::recordStateOutput(::state_machine::State
 void VrpnPx4RotorStateEstimatorRuntime::markInnovationRejected() {
     estimator_flags_ |= kInnovationRejected;
     last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kInnovationGate;
+    last_pose_update_result_ = xgc2_math::Pose3InertialEskf::PoseUpdateResult{};
+    last_pose_update_result_.innovation_rejected = true;
+    last_pose_update_result_.reject_reason = xgc2_math::PoseFusionRejectReason::kInnovationGate;
+    last_pose_update_result_.filter_health = estimator_.filterHealth();
+    last_pose_update_result_.vrpn_observation_state = estimator_.vrpnObservationState();
+    last_pose_update_result_.innovation_window_chi_square =
+        estimator_.vrpnInnovationWindowChiSquare();
     last_pose_accepted_ = false;
 }
 
@@ -348,6 +393,19 @@ VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::makeOutput(
     output.last_pose_accepted = last_pose_accepted_;
     output.last_fused_pose_stamp_sec = estimator_.lastFusedPoseStampS();
     output.vrpn_innovation_window_chi_square = estimator_.vrpnInnovationWindowChiSquare();
+    output.last_pose_position_innovation_norm_m = last_pose_update_result_.position_innovation_norm;
+    output.last_pose_orientation_innovation_norm_rad =
+        last_pose_update_result_.orientation_innovation_norm;
+    output.last_pose_mahalanobis_distance = last_pose_update_result_.mahalanobis_distance;
+    output.innovation_position_gate_m = config_.innovation_position_gate_m;
+    output.innovation_orientation_gate_rad = config_.innovation_orientation_gate_rad;
+    output.pose_nis_gate = config_.pose_nis_gate;
+    output.last_imu_sample_stamp_sec = input_.imu.stamp_sec;
+    output.last_vrpn_pose_stamp_sec = input_.vrpn_pose.stamp_sec;
+    output.filter_inertial_stamp_sec = estimator_.state().last_inertial_stamp_sec;
+    output.filter_pose_stamp_sec = estimator_.state().last_pose_stamp_sec;
+    output.vrpn_consecutive_rejects = static_cast<uint32_t>(estimator_.vrpnConsecutiveRejects());
+    output.vrpn_consecutive_accepts = static_cast<uint32_t>(estimator_.vrpnConsecutiveAccepts());
     if (estimator_.hasCorrectedBodyPose()) {
         output.corrected_vision_pose = estimator_.correctedBodyPose();
         output.has_corrected_vision_pose = true;

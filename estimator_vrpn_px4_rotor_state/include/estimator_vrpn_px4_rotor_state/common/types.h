@@ -53,12 +53,14 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double gyro_noise_std{0.03};
     double vrpn_position_noise_std{0.01};
     double vrpn_orientation_noise_std{0.01};
+    double vrpn_velocity_noise_std{0.05};
     double gyro_bias_random_walk_std{1.0e-4};
     double accel_bias_random_walk_std{1.0e-3};
     double extrinsic_position_random_walk_std{1.0e-5};
     double extrinsic_orientation_random_walk_std{1.0e-5};
     double innovation_position_gate_m{1.5};
     double innovation_orientation_gate_rad{0.8};
+    double velocity_innovation_gate_mps{3.0};
     double pose_nis_gate{22.5};
     double covariance_high_threshold{100.0};
     double max_propagation_dt_s{0.01};
@@ -74,6 +76,7 @@ struct VrpnPx4RotorStateEstimatorConfig {
 struct VrpnPx4RotorStateEstimatorInput {
     xgc2_math::InertialSample imu{};
     xgc2_math::PoseMeasurement vrpn_pose{};
+    xgc2_math::VelocityMeasurement vrpn_velocity{};
 };
 
 struct VrpnPx4RotorStateEstimatorOutput {
@@ -82,8 +85,20 @@ struct VrpnPx4RotorStateEstimatorOutput {
     xgc2_math::RigidBodyState state{};
     double last_fused_pose_stamp_sec{0.0};
     double vrpn_innovation_window_chi_square{0.0};
+    double last_pose_position_innovation_norm_m{0.0};
+    double last_pose_orientation_innovation_norm_rad{0.0};
+    double last_pose_mahalanobis_distance{0.0};
+    double innovation_position_gate_m{0.0};
+    double innovation_orientation_gate_rad{0.0};
+    double pose_nis_gate{0.0};
+    double last_imu_sample_stamp_sec{0.0};
+    double last_vrpn_pose_stamp_sec{0.0};
+    double filter_inertial_stamp_sec{0.0};
+    double filter_pose_stamp_sec{0.0};
     double stamp_sec{0.0};
     uint32_t flags{0};
+    uint32_t vrpn_consecutive_rejects{0};
+    uint32_t vrpn_consecutive_accepts{0};
     xgc2_math::VrpnObservationState vrpn_observation_state{
         xgc2_math::VrpnObservationState::kTrusted};
     xgc2_math::FilterHealth filter_health{xgc2_math::FilterHealth::kLost};

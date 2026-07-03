@@ -20,8 +20,7 @@ SelfCheckState::SelfCheckState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_
     if (runtime_.health().state != state_type::SelfCheck) {
         return {};
     }
-    runtime_.recordStateOutput(state_type::SelfCheck,
-                               runtime_.health().flags | runtime_.estimatorFlags());
+    runtime_.recordStateOutput(state_type::SelfCheck, runtime_.outputFlags());
     emitOutputIfDue(ctx);
     return {};
 }

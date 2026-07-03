@@ -60,6 +60,10 @@ void applyFilterHealthFlags(xgc2_math::FilterHealth health, uint32_t& flags) {
     }
 }
 
+uint32_t mergedOutputFlags(uint32_t health_flags, uint32_t estimator_flags) {
+    return (health_flags & ~kPoseFusionRuntimeFlags) | estimator_flags;
+}
+
 }  // namespace
 
 VrpnUgvStateEstimatorRuntime::VrpnUgvStateEstimatorRuntime() {
@@ -106,7 +110,7 @@ VrpnUgvStateEstimatorOutput VrpnUgvStateEstimatorRuntime::update(double now_sec)
         fault_requested_ = true;
         state_ = state_type::Fault;
         estimator_flags_ |= kFault;
-        recordStateOutput(state_, health_.flags | estimator_flags_);
+        recordStateOutput(state_, outputFlags());
     }
     return snapshotOutput();
 }
@@ -117,8 +121,12 @@ VrpnUgvStateEstimatorOutput VrpnUgvStateEstimatorRuntime::snapshotOutput() const
 }
 
 VrpnUgvStateEstimatorOutput VrpnUgvStateEstimatorRuntime::refreshOutputSnapshot() {
-    recordStateOutput(state_, health_.flags | estimator_flags_);
+    recordStateOutput(state_, outputFlags());
     return snapshotOutput();
+}
+
+uint32_t VrpnUgvStateEstimatorRuntime::outputFlags() const {
+    return mergedOutputFlags(health_.flags, estimator_flags_);
 }
 
 void VrpnUgvStateEstimatorRuntime::enterState(::state_machine::StateId state) {

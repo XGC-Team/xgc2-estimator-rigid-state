@@ -22,6 +22,7 @@ constexpr ::state_machine::StateId HealthMonitor = 100;
 namespace event_type {
 constexpr ::state_machine::EventId INPUT_IMU_UPDATED = 1001;
 constexpr ::state_machine::EventId INPUT_VRPN_POSE_UPDATED = 1002;
+constexpr ::state_machine::EventId INPUT_VRPN_VELOCITY_UPDATED = 1003;
 
 constexpr ::state_machine::EventId HEALTH_TO_SELF_CHECK = 2001;
 constexpr ::state_machine::EventId HEALTH_TO_INITIALIZING = 2002;

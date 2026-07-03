@@ -39,6 +39,7 @@ inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.gyro_noise_std = positiveOr(config.gyro_noise_std, 0.03);
     config.vrpn_position_noise_std = positiveOr(config.vrpn_position_noise_std, 0.01);
     config.vrpn_orientation_noise_std = positiveOr(config.vrpn_orientation_noise_std, 0.01);
+    config.vrpn_velocity_noise_std = positiveOr(config.vrpn_velocity_noise_std, 0.05);
     config.gyro_bias_random_walk_std = nonNegativeOr(config.gyro_bias_random_walk_std, 1.0e-4);
     config.accel_bias_random_walk_std = nonNegativeOr(config.accel_bias_random_walk_std, 1.0e-3);
     config.extrinsic_position_random_walk_std =
@@ -48,6 +49,7 @@ inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.innovation_position_gate_m = positiveOr(config.innovation_position_gate_m, 1.5);
     config.innovation_orientation_gate_rad =
         positiveOr(config.innovation_orientation_gate_rad, 0.8);
+    config.velocity_innovation_gate_mps = positiveOr(config.velocity_innovation_gate_mps, 3.0);
     config.pose_nis_gate = positiveOr(config.pose_nis_gate, 22.5);
     config.covariance_high_threshold = positiveOr(config.covariance_high_threshold, 100.0);
     config.max_propagation_dt_s = positiveOr(config.max_propagation_dt_s, 0.01);

@@ -22,8 +22,7 @@ InitializingState::InitializingState(VrpnPx4RotorStateEstimatorRuntime& runtime)
         return {};
     }
     runtime_.initializeIfReady();
-    runtime_.recordStateOutput(state_type::Initializing,
-                               runtime_.health().flags | runtime_.estimatorFlags());
+    runtime_.recordStateOutput(state_type::Initializing, runtime_.outputFlags());
     emitOutputIfDue(ctx);
     return {};
 }

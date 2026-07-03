@@ -53,6 +53,7 @@ class VrpnUgvStateEstimatorRuntime {
     uint32_t estimatorFlags() const {
         return estimator_flags_;
     }
+    uint32_t outputFlags() const;
     xgc2_math::Pose2InertialEskf& estimator() {
         return estimator_;
     }

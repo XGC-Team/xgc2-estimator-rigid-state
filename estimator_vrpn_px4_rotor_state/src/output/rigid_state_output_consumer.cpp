@@ -1,5 +1,8 @@
 #include "estimator_vrpn_px4_rotor_state/output/rigid_state_output_consumer.h"
 
+#include <estimator_vrpn_px4_rotor_state/RigidStateEstimate.h>
+#include <geometry_msgs/PoseStamped.h>
+
 #include <memory>
 #include <utility>
 
@@ -58,6 +61,12 @@ std::unique_ptr<::state_machine::runtime::Task<ros::NodeHandle>> makePublishVisi
         });
 }
 
+estimator_vrpn_px4_rotor_state::RigidStateEstimate makeStateMessage(
+    const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp);
+geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimatorOutput& output,
+                                                 const ros::Time& stamp);
+bool canPublishVisionPose(const VrpnPx4RotorStateEstimatorOutput& output);
+
 }  // namespace
 
 RigidStateOutputConsumer::RigidStateOutputConsumer(
@@ -91,7 +100,9 @@ bool RigidStateOutputConsumer::handle(const ::state_machine::Event& event) {
     return false;
 }
 
-estimator_vrpn_px4_rotor_state::RigidStateEstimate RigidStateOutputConsumer::makeStateMessage(
+namespace {
+
+estimator_vrpn_px4_rotor_state::RigidStateEstimate makeStateMessage(
     const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp) {
     estimator_vrpn_px4_rotor_state::RigidStateEstimate msg;
     msg.header.stamp = stamp;
@@ -110,11 +121,24 @@ estimator_vrpn_px4_rotor_state::RigidStateEstimate RigidStateOutputConsumer::mak
     msg.last_pose_accepted = output.last_pose_accepted;
     msg.last_fused_pose_stamp_sec = output.last_fused_pose_stamp_sec;
     msg.vrpn_innovation_window_chi_square = output.vrpn_innovation_window_chi_square;
+    msg.last_pose_position_innovation_norm_m = output.last_pose_position_innovation_norm_m;
+    msg.last_pose_orientation_innovation_norm_rad =
+        output.last_pose_orientation_innovation_norm_rad;
+    msg.last_pose_mahalanobis_distance = output.last_pose_mahalanobis_distance;
+    msg.innovation_position_gate_m = output.innovation_position_gate_m;
+    msg.innovation_orientation_gate_rad = output.innovation_orientation_gate_rad;
+    msg.pose_nis_gate = output.pose_nis_gate;
+    msg.last_imu_sample_stamp_sec = output.last_imu_sample_stamp_sec;
+    msg.last_vrpn_pose_stamp_sec = output.last_vrpn_pose_stamp_sec;
+    msg.filter_inertial_stamp_sec = output.filter_inertial_stamp_sec;
+    msg.filter_pose_stamp_sec = output.filter_pose_stamp_sec;
+    msg.vrpn_consecutive_rejects = output.vrpn_consecutive_rejects;
+    msg.vrpn_consecutive_accepts = output.vrpn_consecutive_accepts;
     return msg;
 }
 
-geometry_msgs::PoseStamped RigidStateOutputConsumer::makeVisionPoseMessage(
-    const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp) {
+geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimatorOutput& output,
+                                                 const ros::Time& stamp) {
     geometry_msgs::PoseStamped msg;
     msg.header.stamp = stamp;
     msg.header.frame_id = "world";
@@ -123,12 +147,13 @@ geometry_msgs::PoseStamped RigidStateOutputConsumer::makeVisionPoseMessage(
     return msg;
 }
 
-bool RigidStateOutputConsumer::canPublishVisionPose(
-    const VrpnPx4RotorStateEstimatorOutput& output) {
+bool canPublishVisionPose(const VrpnPx4RotorStateEstimatorOutput& output) {
     constexpr uint32_t kVisionBlockingFlags = kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump |
                                               kFault | kPoseTimeAlignmentRejected | kVrpnFault |
                                               kFilterImuOnly;
     return output.has_corrected_vision_pose && (output.flags & kVisionBlockingFlags) == 0u;
 }
+
+}  // namespace
 
 }  // namespace estimator_vrpn_px4_rotor_state

@@ -40,8 +40,9 @@ VrpnPx4RotorStateEstimatorNode::VrpnPx4RotorStateEstimatorNode(ros::NodeHandle& 
         return runtime_.postInputEvent(std::move(event), input);
     };
 
-    input_producer_ = std::make_unique<RigidStateInputProducer>(
-        nh_, imu_topic_, vrpn_pose_topic_, kRosQueueSize, std::move(post_input_event));
+    input_producer_ = std::make_unique<RigidStateInputProducer>(nh_, imu_topic_, vrpn_pose_topic_,
+                                                                vrpn_twist_topic_, kRosQueueSize,
+                                                                std::move(post_input_event));
 
     state_publish_timer_ =
         nh_.createTimer(ros::Duration(1.0 / config_.state_publish_rate_hz),
@@ -50,11 +51,11 @@ VrpnPx4RotorStateEstimatorNode::VrpnPx4RotorStateEstimatorNode(ros::NodeHandle& 
     output_event_executor_.start();
 
     ROS_INFO(
-        "[VrpnPx4RotorStateEstimatorNode] Initialized: imu=%s vrpn_pose=%s state=%s "
+        "[VrpnPx4RotorStateEstimatorNode] Initialized: imu=%s vrpn_pose=%s vrpn_twist=%s state=%s "
         "vision_pose=%s loop=%.1f state_pub=%.1f vision_pub=%.1f",
-        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), state_topic_.c_str(),
-        vision_pose_topic_.c_str(), loop_rate_hz_, config_.state_publish_rate_hz,
-        config_.vision_publish_rate_hz);
+        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), vrpn_twist_topic_.c_str(),
+        state_topic_.c_str(), vision_pose_topic_.c_str(), loop_rate_hz_,
+        config_.state_publish_rate_hz, config_.vision_publish_rate_hz);
 }
 
 VrpnPx4RotorStateEstimatorNode::~VrpnPx4RotorStateEstimatorNode() {
@@ -87,6 +88,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "imu_topic", imu_topic_, "IMU topic");
     ros1_utils::getParamWithLog(private_nh_, "vrpn_pose_topic", vrpn_pose_topic_,
                                 "VRPN pose topic");
+    ros1_utils::getParamWithLog(private_nh_, "vrpn_twist_topic", vrpn_twist_topic_,
+                                "VRPN twist topic");
     ros1_utils::getParamWithLog(private_nh_, "state_topic", state_topic_, "State topic");
     ros1_utils::getParamWithLog(private_nh_, "vision_pose_topic", vision_pose_topic_,
                                 "Vision pose topic");
@@ -128,6 +131,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
                                 config_.vrpn_position_noise_std, "VRPN position noise std");
     ros1_utils::getParamWithLog(private_nh_, "vrpn_orientation_noise_std",
                                 config_.vrpn_orientation_noise_std, "VRPN orientation noise std");
+    ros1_utils::getParamWithLog(private_nh_, "vrpn_velocity_noise_std",
+                                config_.vrpn_velocity_noise_std, "VRPN velocity noise std");
     ros1_utils::getParamWithLog(private_nh_, "gyro_bias_random_walk_std",
                                 config_.gyro_bias_random_walk_std, "Gyro bias random walk std");
     ros1_utils::getParamWithLog(private_nh_, "accel_bias_random_walk_std",
@@ -143,6 +148,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "innovation_orientation_gate_rad",
                                 config_.innovation_orientation_gate_rad,
                                 "Orientation innovation gate");
+    ros1_utils::getParamWithLog(private_nh_, "velocity_innovation_gate_mps",
+                                config_.velocity_innovation_gate_mps, "Velocity innovation gate");
     ros1_utils::getParamWithLog(private_nh_, "pose_nis_gate", config_.pose_nis_gate,
                                 "Pose NIS gate");
     ros1_utils::getParamWithLog(private_nh_, "covariance_high_threshold",

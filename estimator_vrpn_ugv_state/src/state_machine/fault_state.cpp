@@ -17,8 +17,7 @@ FaultState::FaultState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_(runtime
 }
 
 ::state_machine::ActionResult FaultState::onTick(::state_machine::StateContext& ctx) {
-    runtime_.recordStateOutput(state_type::Fault,
-                               runtime_.health().flags | runtime_.estimatorFlags() | kFault);
+    runtime_.recordStateOutput(state_type::Fault, runtime_.outputFlags() | kFault);
     emitOutputIfDue(ctx);
     return {};
 }

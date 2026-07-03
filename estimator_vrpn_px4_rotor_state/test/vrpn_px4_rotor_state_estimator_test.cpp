@@ -33,6 +33,15 @@ xgc2_math::PoseMeasurement makePose(
     return sample;
 }
 
+xgc2_math::VelocityMeasurement makeVelocity(double stamp_sec, const Eigen::Vector3d& velocity) {
+    xgc2_math::VelocityMeasurement sample;
+    sample.received = true;
+    sample.valid = true;
+    sample.stamp_sec = stamp_sec;
+    sample.velocity = velocity;
+    return sample;
+}
+
 VrpnPx4RotorStateEstimatorConfig testConfig() {
     VrpnPx4RotorStateEstimatorConfig config;
     config.extrinsic_verified = true;
@@ -124,6 +133,35 @@ TEST(RigidStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsState
     EXPECT_NEAR(output.state.position.z(), held_state.position.z(), 1.0e-12);
 }
 
+TEST(RigidStateRuntimeTest, VrpnVelocityMeasurementCorrectsInertialVelocityDrift) {
+    VrpnPx4RotorStateEstimatorConfig config = testConfig();
+    config.vrpn_velocity_noise_std = 0.02;
+
+    VrpnPx4RotorStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnPx4RotorStateEstimatorInput input;
+    input.imu = makeImu(1.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
+    input.vrpn_pose = makePose(1.0, Eigen::Vector3d::Zero());
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+    ASSERT_TRUE(runtime.estimator().initialized());
+
+    runtime.estimator().propagateInertial(
+        makeImu(1.1, Eigen::Vector3d::Zero(), Eigen::Vector3d(2.0, 0.0, 9.8066)));
+    ASSERT_GT(runtime.estimator().state().velocity.x(), 0.05);
+
+    input.vrpn_velocity = makeVelocity(1.1, Eigen::Vector3d::Zero());
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_VELOCITY_UPDATED, 1.1), input)
+            .ok());
+    runtime.processVrpnVelocityInput();
+
+    const auto output = runtime.refreshOutputSnapshot();
+    EXPECT_NEAR(output.state.velocity.x(), 0.0, 0.01);
+    EXPECT_NEAR(output.state.velocity.y(), 0.0, 0.01);
+    EXPECT_NEAR(output.state.velocity.z(), 0.0, 0.01);
+}
+
 TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     VrpnPx4RotorStateEstimatorConfig config = testConfig();
     config.innovation_position_gate_m = 0.1;
@@ -162,9 +200,11 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.03), input).ok());
     runtime.processVrpnInput();
     output = runtime.refreshOutputSnapshot();
-    EXPECT_FALSE(output.last_pose_accepted);
-    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kVrpnFault);
-    EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kRecovery);
+    EXPECT_TRUE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kNone);
+    EXPECT_EQ(output.flags & kFilterImuOnly, 0u);
+    EXPECT_NE(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kFault);
+    EXPECT_EQ(output.filter_health, xgc2_math::FilterHealth::kDegraded);
 
     input.vrpn_pose = makePose(1.04, Eigen::Vector3d::Zero());
     ASSERT_TRUE(

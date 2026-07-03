@@ -54,6 +54,7 @@ class VrpnPx4RotorStateEstimatorRuntime {
     uint32_t estimatorFlags() const {
         return estimator_flags_;
     }
+    uint32_t outputFlags() const;
     xgc2_math::Pose3InertialEskf& estimator() {
         return estimator_;
     }
@@ -65,6 +66,7 @@ class VrpnPx4RotorStateEstimatorRuntime {
     void initializeIfReady();
     void processImuInput();
     void processVrpnInput();
+    void processVrpnVelocityInput();
     void recordStateOutput(::state_machine::StateId state, uint32_t flags);
     void markInnovationRejected();
 
@@ -82,6 +84,7 @@ class VrpnPx4RotorStateEstimatorRuntime {
     uint32_t estimator_flags_{0};
     xgc2_math::PoseFusionRejectReason last_pose_reject_reason_{
         xgc2_math::PoseFusionRejectReason::kNone};
+    xgc2_math::Pose3InertialEskf::PoseUpdateResult last_pose_update_result_{};
     bool last_pose_accepted_{false};
     double current_time_sec_{0.0};
     bool fault_requested_{false};

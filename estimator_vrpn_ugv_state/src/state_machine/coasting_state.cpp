@@ -29,8 +29,7 @@ CoastingState::CoastingState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_(r
     if (runtime_.health().state != state_type::Coasting) {
         return {};
     }
-    runtime_.recordStateOutput(state_type::Coasting,
-                               runtime_.health().flags | runtime_.estimatorFlags() | kCoasting);
+    runtime_.recordStateOutput(state_type::Coasting, runtime_.outputFlags() | kCoasting);
     emitOutputIfDue(ctx);
     return {};
 }

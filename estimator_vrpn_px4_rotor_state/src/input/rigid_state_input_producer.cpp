@@ -33,13 +33,18 @@ bool isValidQuaternion(const geometry_msgs::Quaternion& value) {
 }  // namespace
 
 RigidStateInputProducer::RigidStateInputProducer(ros::NodeHandle& nh, std::string imu_topic,
-                                                 std::string vrpn_pose_topic, uint32_t queue_size,
+                                                 std::string vrpn_pose_topic,
+                                                 std::string vrpn_twist_topic, uint32_t queue_size,
                                                  EventSink event_sink)
     : event_sink_(std::move(event_sink)) {
     imu_sub_ =
         nh.subscribe(std::move(imu_topic), queue_size, &RigidStateInputProducer::imuCallback, this);
     vrpn_pose_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
                                   &RigidStateInputProducer::vrpnPoseCallback, this);
+    if (!vrpn_twist_topic.empty()) {
+        vrpn_twist_sub_ = nh.subscribe(std::move(vrpn_twist_topic), queue_size,
+                                       &RigidStateInputProducer::vrpnTwistCallback, this);
+    }
 }
 
 void RigidStateInputProducer::imuCallback(const sensor_msgs::Imu::ConstPtr& msg) {
@@ -74,6 +79,21 @@ void RigidStateInputProducer::vrpnPoseCallback(const geometry_msgs::PoseStamped:
     sample.valid =
         math_utils::isFinite(sample.pose.position) && isValidQuaternion(msg->pose.orientation);
     postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, "vrpn_pose", stamp_sec);
+}
+
+void RigidStateInputProducer::vrpnTwistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg) {
+    if (!msg) {
+        return;
+    }
+
+    const double stamp_sec = messageStampOrNow(msg->header.stamp).toSec();
+    auto& sample = runtime_input_.vrpn_velocity;
+    updateVelocityPeriod(sample, stamp_sec);
+    sample.velocity = toEigen(msg->twist.linear);
+    sample.stamp_sec = stamp_sec;
+    sample.received = true;
+    sample.valid = math_utils::isFinite(sample.velocity);
+    postInputEvent(event_type::INPUT_VRPN_VELOCITY_UPDATED, "vrpn_twist", stamp_sec);
 }
 
 void RigidStateInputProducer::postInputEvent(::state_machine::EventId event_id, const char* source,
@@ -113,6 +133,20 @@ void RigidStateInputProducer::updateImuPeriod(xgc2_math::InertialSample& sample,
 
 void RigidStateInputProducer::updatePosePeriod(xgc2_math::PoseMeasurement& sample,
                                                double stamp_sec) {
+    const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
+    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
+    const bool finite_dt = std::isfinite(raw_dt_sec);
+    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
+    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
+    if (!has_prev || sample.time_jump) {
+        sample.estimated_rate_hz = 0.0;
+    } else if (raw_dt_sec > kMinRateDeltaSec) {
+        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
+    }
+}
+
+void RigidStateInputProducer::updateVelocityPeriod(xgc2_math::VelocityMeasurement& sample,
+                                                   double stamp_sec) {
     const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
     const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
     const bool finite_dt = std::isfinite(raw_dt_sec);

@@ -24,6 +24,8 @@ RunningState::RunningState(VrpnPx4RotorStateEstimatorRuntime& runtime) : runtime
         runtime_.processImuInput();
     } else if (event.id == event_type::INPUT_VRPN_POSE_UPDATED) {
         runtime_.processVrpnInput();
+    } else if (event.id == event_type::INPUT_VRPN_VELOCITY_UPDATED) {
+        runtime_.processVrpnVelocityInput();
     }
     return {};
 }
@@ -32,8 +34,7 @@ RunningState::RunningState(VrpnPx4RotorStateEstimatorRuntime& runtime) : runtime
     if (runtime_.health().state != state_type::Running) {
         return {};
     }
-    runtime_.recordStateOutput(state_type::Running,
-                               runtime_.health().flags | runtime_.estimatorFlags());
+    runtime_.recordStateOutput(state_type::Running, runtime_.outputFlags());
     emitOutputIfDue(ctx);
     return {};
 }
