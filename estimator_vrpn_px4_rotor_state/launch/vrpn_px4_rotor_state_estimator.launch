@@ -2,8 +2,24 @@
 <launch>
   <arg name="ns" default="uav1"/>
   <arg name="config_file" default="$(find estimator_vrpn_px4_rotor_state)/config/vrpn_px4_rotor_state_estimator.yaml"/>
+  <arg name="request_highres_imu" default="true"/>
+  <arg name="mavros_ns" default="mavros"/>
+  <arg name="highres_imu_message_id" default="105"/>
+  <arg name="highres_imu_rate" default="250.0"/>
+  <arg name="highres_imu_reassert_period" default="10.0"/>
 
   <group ns="$(arg ns)">
+    <node if="$(arg request_highres_imu)"
+          pkg="estimator_vrpn_px4_rotor_state"
+          type="request_highres_imu_rate.py"
+          name="request_highres_imu_rate"
+          output="screen">
+      <param name="mavros_ns" value="$(arg mavros_ns)"/>
+      <param name="message_id" value="$(arg highres_imu_message_id)"/>
+      <param name="message_rate" value="$(arg highres_imu_rate)"/>
+      <param name="reassert_period_s" value="$(arg highres_imu_reassert_period)"/>
+    </node>
+
     <node pkg="estimator_vrpn_px4_rotor_state"
           type="vrpn_px4_rotor_state_estimator_node"
           name="vrpn_px4_rotor_state_estimator"

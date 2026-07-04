@@ -29,3 +29,8 @@ roslaunch estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch n
 Parameters are loaded from
 `config/vrpn_px4_rotor_state_estimator.yaml` under the node namespace
 `/<ns>/vrpn_px4_rotor_state_estimator`.
+
+When launched with the default `request_highres_imu:=true`, the estimator also
+requests MAVLink `HIGHRES_IMU(105)` at `250 Hz` through
+`/<ns>/mavros/set_message_interval`. This keeps the raw IMU telemetry rate
+owned by the state-estimation consumer instead of the simulator wrapper.

@@ -13,7 +13,9 @@
   <exec_depend>message_runtime</exec_depend>
 
   <depend>geometry_msgs</depend>
+  <depend>mavros_msgs</depend>
   <depend>roscpp</depend>
+  <depend>rospy</depend>
   <depend>ros1_utils</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>

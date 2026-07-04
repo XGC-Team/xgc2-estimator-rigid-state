@@ -3,8 +3,10 @@ project(estimator_vrpn_px4_rotor_state)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  mavros_msgs
   message_generation
   roscpp
+  rospy
   ros1_utils
   sensor_msgs
   std_msgs
@@ -28,8 +30,13 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_px4_rotor_state_core estimator_vrpn_px4_rotor_state_ros
-  CATKIN_DEPENDS geometry_msgs message_runtime roscpp ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs mavros_msgs message_runtime roscpp rospy ros1_utils sensor_msgs std_msgs
   DEPENDS EIGEN3
+)
+
+catkin_install_python(PROGRAMS
+  scripts/request_highres_imu_rate.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 set(PRIVATE_GENERATED_INCLUDE_DIR
@@ -56,7 +63,13 @@ add_dependencies(${PROJECT_NAME}_private_generated_headers
 )
 
 include_directories(
+  BEFORE
+  ${PRIVATE_GENERATED_INCLUDE_DIR}
+  ${CATKIN_DEVEL_PREFIX}/include
   include
+)
+
+include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
 )
@@ -150,6 +163,13 @@ install(DIRECTORY config/
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
+
+install(DIRECTORY scripts/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
+  USE_SOURCE_PERMISSIONS
+  PATTERN "__pycache__" EXCLUDE
+  PATTERN "*.pyc" EXCLUDE
 )
 
 install(DIRECTORY msg/
