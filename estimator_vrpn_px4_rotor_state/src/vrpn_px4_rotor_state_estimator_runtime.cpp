@@ -7,7 +7,6 @@
 
 #include "estimator_vrpn_px4_rotor_state/common/config_utils.h"
 #include "estimator_vrpn_px4_rotor_state/state_machine/coasting_state.h"
-#include "estimator_vrpn_px4_rotor_state/state_machine/fault_state.h"
 #include "estimator_vrpn_px4_rotor_state/state_machine/health_monitor_state.h"
 #include "estimator_vrpn_px4_rotor_state/state_machine/initializing_state.h"
 #include "estimator_vrpn_px4_rotor_state/state_machine/running_state.h"
@@ -66,6 +65,18 @@ uint32_t mergedOutputFlags(uint32_t health_flags, uint32_t estimator_flags) {
     return (health_flags & ~kPoseFusionRuntimeFlags) | estimator_flags;
 }
 
+bool stateHandlesInputEvent(::state_machine::StateId state, ::state_machine::EventId event_id) {
+    if (state == state_type::Running) {
+        return event_id == event_type::INPUT_IMU_UPDATED ||
+               event_id == event_type::INPUT_VRPN_POSE_UPDATED ||
+               event_id == event_type::INPUT_VRPN_VELOCITY_UPDATED;
+    }
+    if (state == state_type::Coasting) {
+        return event_id == event_type::INPUT_IMU_UPDATED;
+    }
+    return false;
+}
+
 xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     const VrpnPx4RotorStateEstimatorConfig& config) {
     xgc2_math::Pose3InertialEskfConfig result;
@@ -120,7 +131,7 @@ void VrpnPx4RotorStateEstimatorRuntime::reset() {
     last_pose_update_result_ = xgc2_math::Pose3InertialEskf::PoseUpdateResult{};
     last_pose_accepted_ = false;
     current_time_sec_ = 0.0;
-    fault_requested_ = false;
+    self_check_requested_ = false;
     state_ = state_type::SelfCheck;
     {
         std::lock_guard<std::mutex> lock(output_mutex_);
@@ -132,6 +143,8 @@ void VrpnPx4RotorStateEstimatorRuntime::reset() {
 sm::Status VrpnPx4RotorStateEstimatorRuntime::postInputEvent(
     sm::Event event, const VrpnPx4RotorStateEstimatorInput& input) {
     input_ = input;
+    const auto event_id = event.id;
+    const auto state_before_update = state_;
     event.category = sm::EventCategory::kInput;
     if (event.timestamp > 0.0) {
         current_time_sec_ = event.timestamp;
@@ -143,11 +156,19 @@ sm::Status VrpnPx4RotorStateEstimatorRuntime::postInputEvent(
 
     const auto update_result = machine_->update({64, 64, false});
     if (!update_result.status.ok()) {
-        fault_requested_ = true;
-        state_ = state_type::Fault;
-        estimator_flags_ |= kFault;
+        self_check_requested_ = true;
+        state_ = state_type::SelfCheck;
         recordStateOutput(state_, outputFlags());
         return update_result.status;
+    }
+    if (state_ == state_type::Running && !stateHandlesInputEvent(state_before_update, event_id)) {
+        if (event_id == event_type::INPUT_IMU_UPDATED) {
+            processImuInput();
+        } else if (event_id == event_type::INPUT_VRPN_POSE_UPDATED) {
+            processVrpnInput();
+        } else if (event_id == event_type::INPUT_VRPN_VELOCITY_UPDATED) {
+            processVrpnVelocityInput();
+        }
     }
     return {};
 }
@@ -158,9 +179,8 @@ VrpnPx4RotorStateEstimatorOutput VrpnPx4RotorStateEstimatorRuntime::update(doubl
     const auto tick_result =
         transition_result.status.ok() ? machine_->update({64, 64, true}) : transition_result;
     if (!tick_result.status.ok()) {
-        fault_requested_ = true;
-        state_ = state_type::Fault;
-        estimator_flags_ |= kFault;
+        self_check_requested_ = true;
+        state_ = state_type::SelfCheck;
         recordStateOutput(state_, outputFlags());
     }
     return snapshotOutput();
@@ -233,9 +253,6 @@ void VrpnPx4RotorStateEstimatorRuntime::processVrpnVelocityInput() {
 
 void VrpnPx4RotorStateEstimatorRuntime::recordStateOutput(::state_machine::StateId state,
                                                           uint32_t flags) {
-    if (state == state_type::Fault) {
-        flags |= kFault;
-    }
     state_ = state;
     std::lock_guard<std::mutex> lock(output_mutex_);
     last_output_ = makeOutput(state_, flags);
@@ -280,97 +297,57 @@ void VrpnPx4RotorStateEstimatorRuntime::setupMachine() {
         .state(state_type::Coasting)
         .name("Coasting")
         .impl(std::make_unique<CoastingState>(*this))
-        .state(state_type::Fault)
-        .name("Fault")
-        .impl(std::make_unique<FaultState>(*this))
         .endRegion();
 
     builder.transition()
         .from(state_type::SelfCheck)
         .to(state_type::Initializing)
-        .on(event_type::HEALTH_TO_INITIALIZING)
+        .on(event_type::HEALTH_INITIALIZATION_READY)
         .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
     builder.transition()
         .from(state_type::SelfCheck)
-        .to(state_type::Fault)
-        .on(event_type::HEALTH_TO_FAULT)
-        .priority(transition_priority::FAULT)
+        .to(state_type::Running)
+        .on(event_type::HEALTH_ESTIMATION_READY)
+        .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
 
     builder.transition()
         .from(state_type::Initializing)
         .to(state_type::SelfCheck)
-        .on(event_type::HEALTH_TO_SELF_CHECK)
+        .on(event_type::HEALTH_INPUT_UNHEALTHY)
         .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
     builder.transition()
         .from(state_type::Initializing)
         .to(state_type::Running)
-        .on(event_type::HEALTH_TO_RUNNING)
+        .on(event_type::HEALTH_ESTIMATION_READY)
         .priority(transition_priority::AUTOMATIC)
-        .evaluationOrder(0);
-    builder.transition()
-        .from(state_type::Initializing)
-        .to(state_type::Fault)
-        .on(event_type::HEALTH_TO_FAULT)
-        .priority(transition_priority::FAULT)
         .evaluationOrder(0);
 
     builder.transition()
         .from(state_type::Running)
         .to(state_type::SelfCheck)
-        .on(event_type::HEALTH_TO_SELF_CHECK)
+        .on(event_type::HEALTH_INPUT_UNHEALTHY)
         .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
     builder.transition()
         .from(state_type::Running)
         .to(state_type::Coasting)
-        .on(event_type::HEALTH_TO_COASTING)
+        .on(event_type::HEALTH_VRPN_LOSS_COASTABLE)
         .priority(transition_priority::AUTOMATIC)
-        .evaluationOrder(0);
-    builder.transition()
-        .from(state_type::Running)
-        .to(state_type::Fault)
-        .on(event_type::HEALTH_TO_FAULT)
-        .priority(transition_priority::FAULT)
         .evaluationOrder(0);
 
     builder.transition()
         .from(state_type::Coasting)
         .to(state_type::Running)
-        .on(event_type::HEALTH_TO_RUNNING)
+        .on(event_type::HEALTH_ESTIMATION_READY)
         .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
     builder.transition()
         .from(state_type::Coasting)
         .to(state_type::SelfCheck)
-        .on(event_type::HEALTH_TO_SELF_CHECK)
-        .priority(transition_priority::AUTOMATIC)
-        .evaluationOrder(0);
-    builder.transition()
-        .from(state_type::Coasting)
-        .to(state_type::Fault)
-        .on(event_type::HEALTH_TO_FAULT)
-        .priority(transition_priority::FAULT)
-        .evaluationOrder(0);
-
-    builder.transition()
-        .from(state_type::Fault)
-        .to(state_type::SelfCheck)
-        .on(event_type::HEALTH_TO_SELF_CHECK)
-        .priority(transition_priority::AUTOMATIC)
-        .evaluationOrder(0);
-    builder.transition()
-        .from(state_type::Fault)
-        .to(state_type::Initializing)
-        .on(event_type::HEALTH_TO_INITIALIZING)
-        .priority(transition_priority::AUTOMATIC)
-        .evaluationOrder(0);
-    builder.transition()
-        .from(state_type::Fault)
-        .to(state_type::Running)
-        .on(event_type::HEALTH_TO_RUNNING)
+        .on(event_type::HEALTH_INPUT_UNHEALTHY)
         .priority(transition_priority::AUTOMATIC)
         .evaluationOrder(0);
 

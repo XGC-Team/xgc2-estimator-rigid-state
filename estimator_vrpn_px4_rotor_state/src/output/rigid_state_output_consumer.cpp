@@ -2,12 +2,12 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <rigid_state_estimator_msgs/RigidStateEstimate.h>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include <memory>
 #include <utility>
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
-#include "estimator_vrpn_px4_rotor_state/common/math_utils.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
 namespace estimator_vrpn_px4_rotor_state {
@@ -34,7 +34,7 @@ geometry_msgs::Vector3 toVector3(const Eigen::Vector3d& value) {
 }
 
 geometry_msgs::Quaternion toQuaternion(const Eigen::Quaterniond& value) {
-    const Eigen::Quaterniond q = math_utils::normalized(value);
+    const Eigen::Quaterniond q = xgc2_math::normalizedQuaternion(value);
     geometry_msgs::Quaternion msg;
     msg.w = q.w();
     msg.x = q.x();
@@ -149,7 +149,7 @@ geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimato
 
 bool canPublishVisionPose(const VrpnPx4RotorStateEstimatorOutput& output) {
     constexpr uint32_t kVisionBlockingFlags = kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump |
-                                              kFault | kPoseTimeAlignmentRejected | kVrpnFault |
+                                              kPoseTimeAlignmentRejected | kVrpnFault |
                                               kFilterImuOnly;
     return output.has_corrected_vision_pose && (output.flags & kVisionBlockingFlags) == 0u;
 }

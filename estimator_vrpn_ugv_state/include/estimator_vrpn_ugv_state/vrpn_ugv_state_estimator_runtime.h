@@ -47,8 +47,8 @@ class VrpnUgvStateEstimatorRuntime {
     double currentTime() const {
         return current_time_sec_;
     }
-    bool faultRequested() const {
-        return fault_requested_;
+    bool selfCheckRequested() const {
+        return self_check_requested_;
     }
     uint32_t estimatorFlags() const {
         return estimator_flags_;
@@ -82,7 +82,10 @@ class VrpnUgvStateEstimatorRuntime {
         xgc2_math::PoseFusionRejectReason::kNone};
     bool last_pose_accepted_{false};
     double current_time_sec_{0.0};
-    bool fault_requested_{false};
+    bool self_check_requested_{false};
+    ::state_machine::EventId pending_input_event_id_{0};
+    ::state_machine::StateId pending_input_state_{state_type::SelfCheck};
+    bool pending_input_event_{false};
     mutable std::mutex output_mutex_;
     VrpnUgvStateEstimatorOutput last_output_{};
 };

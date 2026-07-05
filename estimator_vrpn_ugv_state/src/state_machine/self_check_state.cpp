@@ -17,7 +17,7 @@ SelfCheckState::SelfCheckState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_
 }
 
 ::state_machine::ActionResult SelfCheckState::onTick(::state_machine::StateContext& ctx) {
-    if (runtime_.health().state != state_type::SelfCheck) {
+    if (runtime_.health().condition != HealthCondition::kInputUnhealthy) {
         return {};
     }
     runtime_.recordStateOutput(state_type::SelfCheck, runtime_.outputFlags());

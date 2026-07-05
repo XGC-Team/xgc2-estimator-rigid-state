@@ -30,7 +30,6 @@ include_directories(
 add_library(estimator_vrpn_ugv_state_core
   src/vrpn_ugv_state_estimator_runtime.cpp
   src/state_machine/coasting_state.cpp
-  src/state_machine/fault_state.cpp
   src/state_machine/health_monitor_state.cpp
   src/state_machine/running_state.cpp
   src/state_machine/self_check_state.cpp

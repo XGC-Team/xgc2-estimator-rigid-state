@@ -18,7 +18,7 @@ InitializingState::InitializingState(VrpnPx4RotorStateEstimatorRuntime& runtime)
 }
 
 ::state_machine::ActionResult InitializingState::onTick(::state_machine::StateContext& ctx) {
-    if (runtime_.health().state != state_type::Initializing) {
+    if (runtime_.health().condition != HealthCondition::kInitializationReady) {
         return {};
     }
     runtime_.initializeIfReady();

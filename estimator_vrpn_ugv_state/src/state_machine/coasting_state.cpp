@@ -26,7 +26,7 @@ CoastingState::CoastingState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_(r
 }
 
 ::state_machine::ActionResult CoastingState::onTick(::state_machine::StateContext& ctx) {
-    if (runtime_.health().state != state_type::Coasting) {
+    if (runtime_.health().condition != HealthCondition::kVrpnLossCoastable) {
         return {};
     }
     runtime_.recordStateOutput(state_type::Coasting, runtime_.outputFlags() | kCoasting);

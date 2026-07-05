@@ -186,19 +186,19 @@ TEST(VrpnUgvStateRuntimeTest, VrpnFaultFlagsAndFilteredPoseOutputRecover) {
     EXPECT_NEAR(output.corrected_body_pose.position.x(), output.state.position.x(), 1.0e-12);
 }
 
-TEST(VrpnUgvStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenFaults) {
+TEST(VrpnUgvStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenReturnsSelfCheck) {
     VrpnUgvStateEstimatorConfig config = testConfig();
     VrpnUgvStateEstimatorInput input;
     input.imu = makeImu(10.0, 0.0, Eigen::Vector2d::Zero());
     input.vrpn_pose = makePose(9.7, Eigen::Vector2d::Zero(), 0.0);
 
     auto health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.0);
-    EXPECT_EQ(health.state, state_type::Coasting);
+    EXPECT_EQ(health.condition, HealthCondition::kVrpnLossCoastable);
     EXPECT_NE(health.flags & kCoasting, 0u);
 
     health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.6);
-    EXPECT_EQ(health.state, state_type::Fault);
-    EXPECT_NE(health.flags & kFault, 0u);
+    EXPECT_EQ(health.condition, HealthCondition::kInputUnhealthy);
+    EXPECT_EQ(health.flags & kCoasting, 0u);
 }
 
 }  // namespace estimator_vrpn_ugv_state

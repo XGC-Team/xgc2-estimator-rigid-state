@@ -48,8 +48,8 @@ class VrpnPx4RotorStateEstimatorRuntime {
     double currentTime() const {
         return current_time_sec_;
     }
-    bool faultRequested() const {
-        return fault_requested_;
+    bool selfCheckRequested() const {
+        return self_check_requested_;
     }
     uint32_t estimatorFlags() const {
         return estimator_flags_;
@@ -87,7 +87,7 @@ class VrpnPx4RotorStateEstimatorRuntime {
     xgc2_math::Pose3InertialEskf::PoseUpdateResult last_pose_update_result_{};
     bool last_pose_accepted_{false};
     double current_time_sec_{0.0};
-    bool fault_requested_{false};
+    bool self_check_requested_{false};
     mutable std::mutex output_mutex_;
     VrpnPx4RotorStateEstimatorOutput last_output_{};
 };

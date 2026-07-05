@@ -1,5 +1,8 @@
 #include "estimator_vrpn_ugv_state/state_machine/health_monitor_state.h"
 
+#include <state_machine/runtime/event_time.hpp>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "estimator_vrpn_ugv_state/common/event_types.h"
@@ -9,9 +12,17 @@
 namespace estimator_vrpn_ugv_state {
 namespace {
 
-double eventTimeOrCurrent(const ::state_machine::Event& event,
-                          const VrpnUgvStateEstimatorRuntime& runtime) {
-    return event.timestamp > 0.0 ? event.timestamp : runtime.currentTime();
+::state_machine::EventId eventForCondition(HealthCondition condition) {
+    switch (condition) {
+        case HealthCondition::kInputUnhealthy:
+            return event_type::HEALTH_INPUT_UNHEALTHY;
+        case HealthCondition::kEstimationReady:
+            return event_type::HEALTH_ESTIMATION_READY;
+        case HealthCondition::kVrpnLossCoastable:
+            return event_type::HEALTH_VRPN_LOSS_COASTABLE;
+    }
+    throw std::runtime_error("unknown VRPN UGV health condition: " +
+                             std::to_string(static_cast<int>(condition)));
 }
 
 }  // namespace
@@ -21,7 +32,8 @@ HealthMonitorState::HealthMonitorState(VrpnUgvStateEstimatorRuntime& runtime) : 
 ::state_machine::ActionResult HealthMonitorState::onEvent(::state_machine::StateContext& ctx,
                                                           const ::state_machine::Event& event) {
     if (event.category == ::state_machine::EventCategory::kInput) {
-        evaluateAndPostTransition(ctx, eventTimeOrCurrent(event, runtime_));
+        evaluateAndPostTransition(
+            ctx, ::state_machine::runtime::eventTimestampOr(event, runtime_.currentTime()));
     }
     return {};
 }
@@ -33,24 +45,24 @@ HealthMonitorState::HealthMonitorState(VrpnUgvStateEstimatorRuntime& runtime) : 
 
 void HealthMonitorState::evaluateAndPostTransition(::state_machine::StateContext& ctx,
                                                    double now_sec) const {
+    const HealthCondition previous_condition = runtime_.health().condition;
     const auto health = health_checks::classify(
         runtime_.input(), runtime_.config(), runtime_.estimator().initialized(),
-        runtime_.faultRequested(), runtime_.estimator().state().covariance_trace,
+        runtime_.selfCheckRequested(), runtime_.estimator().state().covariance_trace,
         runtime_.estimatorFlags(), now_sec);
     runtime_.setHealth(health);
 
-    const auto active_state = ctx.currentState(region_type::ESTIMATION);
-    if (active_state == health.state || health.transition_event == 0) {
+    if (health.condition == previous_condition) {
         return;
     }
 
-    ::state_machine::Event event(health.transition_event, ::state_machine::EventTimestamp{now_sec});
+    ::state_machine::Event event(eventForCondition(health.condition),
+                                 ::state_machine::EventTimestamp{now_sec});
     event.source = "vrpn_ugv_state_health_monitor";
     event.category = ::state_machine::EventCategory::kInternal;
     const auto status = ctx.postInternalEvent(std::move(event));
     if (!status.ok()) {
-        runtime_.setHealth(HealthStatus{state_type::Fault, event_type::HEALTH_TO_FAULT,
-                                        health.flags | kFault, false, false});
+        throw std::runtime_error("post VRPN UGV health event: " + status.message);
     }
 }
 

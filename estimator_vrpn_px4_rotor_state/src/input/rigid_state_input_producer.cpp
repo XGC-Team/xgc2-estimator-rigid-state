@@ -1,11 +1,13 @@
 #include "estimator_vrpn_px4_rotor_state/input/rigid_state_input_producer.h"
 
+#include <ros1_utils/time_utils.h>
+#include <xgc2_math/geometry/se3.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <utility>
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
-#include "estimator_vrpn_px4_rotor_state/common/math_utils.h"
 
 namespace estimator_vrpn_px4_rotor_state {
 namespace {
@@ -22,12 +24,26 @@ Eigen::Vector3d pointToEigen(const geometry_msgs::Point& value) {
 }
 
 Eigen::Quaterniond toEigen(const geometry_msgs::Quaternion& value) {
-    return math_utils::normalized(Eigen::Quaterniond(value.w, value.x, value.y, value.z));
+    return xgc2_math::normalizedQuaternion(
+        Eigen::Quaterniond(value.w, value.x, value.y, value.z));
 }
 
 bool isValidQuaternion(const geometry_msgs::Quaternion& value) {
     const Eigen::Quaterniond q(value.w, value.x, value.y, value.z);
-    return math_utils::isFinite(q) && q.norm() > 1.0e-9;
+    return xgc2_math::isFinite(q) && q.norm() > 1.0e-9;
+}
+
+template <typename Sample> void updateSampleTiming(Sample& sample, double stamp_sec) {
+    const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
+    const double raw_dt_sec = ros1_utils::samplePeriodSec(has_prev, sample.stamp_sec, stamp_sec);
+    const bool finite_dt = std::isfinite(raw_dt_sec);
+    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
+    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
+    if (!has_prev || sample.time_jump) {
+        sample.estimated_rate_hz = 0.0;
+    } else if (raw_dt_sec > kMinRateDeltaSec) {
+        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
+    }
 }
 
 }  // namespace
@@ -52,15 +68,15 @@ void RigidStateInputProducer::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
         return;
     }
 
-    const double stamp_sec = messageStampOrNow(msg->header.stamp).toSec();
+    const double stamp_sec = ros1_utils::messageStampOrNow(msg->header.stamp).toSec();
     auto& sample = runtime_input_.imu;
-    updateImuPeriod(sample, stamp_sec);
+    updateSampleTiming(sample, stamp_sec);
     sample.angular_velocity = toEigen(msg->angular_velocity);
     sample.linear_acceleration = toEigen(msg->linear_acceleration);
     sample.stamp_sec = stamp_sec;
     sample.received = true;
-    sample.valid = math_utils::isFinite(sample.angular_velocity) &&
-                   math_utils::isFinite(sample.linear_acceleration);
+    sample.valid = xgc2_math::isFinite(sample.angular_velocity) &&
+                   xgc2_math::isFinite(sample.linear_acceleration);
     postInputEvent(event_type::INPUT_IMU_UPDATED, "raw_imu", stamp_sec);
 }
 
@@ -69,15 +85,15 @@ void RigidStateInputProducer::vrpnPoseCallback(const geometry_msgs::PoseStamped:
         return;
     }
 
-    const double stamp_sec = messageStampOrNow(msg->header.stamp).toSec();
+    const double stamp_sec = ros1_utils::messageStampOrNow(msg->header.stamp).toSec();
     auto& sample = runtime_input_.vrpn_pose;
-    updatePosePeriod(sample, stamp_sec);
+    updateSampleTiming(sample, stamp_sec);
     sample.pose.position = pointToEigen(msg->pose.position);
     sample.pose.orientation = toEigen(msg->pose.orientation);
     sample.stamp_sec = stamp_sec;
     sample.received = true;
     sample.valid =
-        math_utils::isFinite(sample.pose.position) && isValidQuaternion(msg->pose.orientation);
+        xgc2_math::isFinite(sample.pose.position) && isValidQuaternion(msg->pose.orientation);
     postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, "vrpn_pose", stamp_sec);
 }
 
@@ -86,13 +102,13 @@ void RigidStateInputProducer::vrpnTwistCallback(const geometry_msgs::TwistStampe
         return;
     }
 
-    const double stamp_sec = messageStampOrNow(msg->header.stamp).toSec();
+    const double stamp_sec = ros1_utils::messageStampOrNow(msg->header.stamp).toSec();
     auto& sample = runtime_input_.vrpn_velocity;
-    updateVelocityPeriod(sample, stamp_sec);
+    updateSampleTiming(sample, stamp_sec);
     sample.velocity = toEigen(msg->twist.linear);
     sample.stamp_sec = stamp_sec;
     sample.received = true;
-    sample.valid = math_utils::isFinite(sample.velocity);
+    sample.valid = xgc2_math::isFinite(sample.velocity);
     postInputEvent(event_type::INPUT_VRPN_VELOCITY_UPDATED, "vrpn_twist", stamp_sec);
 }
 
@@ -111,51 +127,6 @@ void RigidStateInputProducer::postInputEvent(::state_machine::EventId event_id, 
         ROS_ERROR_THROTTLE(1.0,
                            "[RigidStateInputProducer] Failed to post input event %u from %s: %s",
                            event_id, source, status.message.c_str());
-    }
-}
-
-ros::Time RigidStateInputProducer::messageStampOrNow(const ros::Time& stamp) {
-    return stamp.isZero() ? ros::Time::now() : stamp;
-}
-
-void RigidStateInputProducer::updateImuPeriod(xgc2_math::InertialSample& sample, double stamp_sec) {
-    const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
-    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
-    const bool finite_dt = std::isfinite(raw_dt_sec);
-    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
-    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
-    if (!has_prev || sample.time_jump) {
-        sample.estimated_rate_hz = 0.0;
-    } else if (raw_dt_sec > kMinRateDeltaSec) {
-        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
-    }
-}
-
-void RigidStateInputProducer::updatePosePeriod(xgc2_math::PoseMeasurement& sample,
-                                               double stamp_sec) {
-    const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
-    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
-    const bool finite_dt = std::isfinite(raw_dt_sec);
-    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
-    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
-    if (!has_prev || sample.time_jump) {
-        sample.estimated_rate_hz = 0.0;
-    } else if (raw_dt_sec > kMinRateDeltaSec) {
-        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
-    }
-}
-
-void RigidStateInputProducer::updateVelocityPeriod(xgc2_math::VelocityMeasurement& sample,
-                                                   double stamp_sec) {
-    const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
-    const double raw_dt_sec = has_prev ? stamp_sec - sample.stamp_sec : 0.0;
-    const bool finite_dt = std::isfinite(raw_dt_sec);
-    sample.time_jump = has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec);
-    sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
-    if (!has_prev || sample.time_jump) {
-        sample.estimated_rate_hz = 0.0;
-    } else if (raw_dt_sec > kMinRateDeltaSec) {
-        sample.estimated_rate_hz = 1.0 / raw_dt_sec;
     }
 }
 

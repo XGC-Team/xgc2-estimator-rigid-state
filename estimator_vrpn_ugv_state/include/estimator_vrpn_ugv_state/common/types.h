@@ -17,7 +17,6 @@ enum RuntimeFlag : uint32_t {
     kVrpnRateLow = 1u << 5,
     kTimeJump = 1u << 6,
     kCoasting = 1u << 7,
-    kFault = 1u << 8,
     kInnovationRejected = 1u << 9,
     kExtrinsicUnverified = 1u << 10,
     kCovarianceHigh = 1u << 11,
@@ -29,6 +28,12 @@ enum RuntimeFlag : uint32_t {
     kVrpnRecovery = 1u << 17,
     kFilterDegraded = 1u << 18,
     kFilterImuOnly = 1u << 19,
+};
+
+enum class HealthCondition : uint8_t {
+    kInputUnhealthy = 0,
+    kEstimationReady = 1,
+    kVrpnLossCoastable = 2,
 };
 
 struct VrpnUgvStateEstimatorConfig {
@@ -85,8 +90,7 @@ struct VrpnUgvStateEstimatorOutput {
 };
 
 struct HealthStatus {
-    ::state_machine::StateId state{state_type::SelfCheck};
-    ::state_machine::EventId transition_event{0};
+    HealthCondition condition{HealthCondition::kInputUnhealthy};
     uint32_t flags{kImuMissing | kVrpnMissing | kExtrinsicUnverified};
     bool imu_ready{false};
     bool vrpn_ready{false};

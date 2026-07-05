@@ -28,10 +28,6 @@ class RigidStateInputProducer {
     void vrpnTwistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
     void postInputEvent(::state_machine::EventId event_id, const char* source,
                         double timestamp_sec);
-    static ros::Time messageStampOrNow(const ros::Time& stamp);
-    static void updateImuPeriod(xgc2_math::InertialSample& sample, double stamp_sec);
-    static void updatePosePeriod(xgc2_math::PoseMeasurement& sample, double stamp_sec);
-    static void updateVelocityPeriod(xgc2_math::VelocityMeasurement& sample, double stamp_sec);
 
     EventSink event_sink_;
     VrpnPx4RotorStateEstimatorInput runtime_input_{};

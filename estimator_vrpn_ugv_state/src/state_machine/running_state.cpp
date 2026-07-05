@@ -29,7 +29,7 @@ RunningState::RunningState(VrpnUgvStateEstimatorRuntime& runtime) : runtime_(run
 }
 
 ::state_machine::ActionResult RunningState::onTick(::state_machine::StateContext& ctx) {
-    if (runtime_.health().state != state_type::Running) {
+    if (runtime_.health().condition != HealthCondition::kEstimationReady) {
         return {};
     }
     runtime_.recordStateOutput(state_type::Running, runtime_.outputFlags());

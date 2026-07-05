@@ -1,6 +1,7 @@
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node.h"
 
 #include <ros1_utils/param_utils.h>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include <cmath>
 #include <memory>
@@ -8,7 +9,6 @@
 
 #include "estimator_vrpn_px4_rotor_state/common/config_utils.h"
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
-#include "estimator_vrpn_px4_rotor_state/common/math_utils.h"
 
 namespace estimator_vrpn_px4_rotor_state {
 namespace {
@@ -22,7 +22,7 @@ void readPoseParams(ros::NodeHandle& nh, const char* xyz_name, const char* rpy_n
     ros1_utils::getVector3ParamWithLog(nh, xyz_name, xyz, std::string(description) + " xyz");
     ros1_utils::getVector3ParamWithLog(nh, rpy_name, rpy, std::string(description) + " rpy");
     pose.position = xyz;
-    pose.orientation = math_utils::rpyToQuaternion(rpy);
+    pose.orientation = xgc2_math::rpyToQuaternion(rpy);
 }
 
 }  // namespace

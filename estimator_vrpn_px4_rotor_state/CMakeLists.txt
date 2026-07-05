@@ -42,7 +42,6 @@ include_directories(
 add_library(estimator_vrpn_px4_rotor_state_core
   src/vrpn_px4_rotor_state_estimator_runtime.cpp
   src/state_machine/coasting_state.cpp
-  src/state_machine/fault_state.cpp
   src/state_machine/health_monitor_state.cpp
   src/state_machine/initializing_state.cpp
   src/state_machine/running_state.cpp

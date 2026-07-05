@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include <cmath>
 #include <limits>
 
 #include "estimator_vrpn_px4_rotor_state/common/health_checks.h"
-#include "estimator_vrpn_px4_rotor_state/common/math_utils.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
 namespace estimator_vrpn_px4_rotor_state {
@@ -29,7 +29,7 @@ xgc2_math::PoseMeasurement makePose(
     sample.valid = true;
     sample.stamp_sec = stamp_sec;
     sample.pose.position = position;
-    sample.pose.orientation = math_utils::normalized(orientation);
+    sample.pose.orientation = xgc2_math::normalizedQuaternion(orientation);
     return sample;
 }
 
@@ -61,15 +61,15 @@ VrpnPx4RotorStateEstimatorConfig testConfig() {
 
 }  // namespace
 
-TEST(RigidStateMathUtilsTest, NormalizedQuaternionIsUnitAndUsesNonnegativeScalarPart) {
+TEST(RigidStateCommonMathTest, NormalizedQuaternionIsUnitAndUsesNonnegativeScalarPart) {
     const Eigen::Quaterniond input(-2.0, 0.1, -0.2, 0.3);
-    const Eigen::Quaterniond output = math_utils::normalized(input);
+    const Eigen::Quaterniond output = xgc2_math::normalizedQuaternion(input);
 
     EXPECT_NEAR(output.norm(), 1.0, 1.0e-12);
     EXPECT_GE(output.w(), 0.0);
 
     const Eigen::Quaterniond invalid(std::numeric_limits<double>::quiet_NaN(), 0.0, 0.0, 0.0);
-    const Eigen::Quaterniond fallback = math_utils::normalized(invalid);
+    const Eigen::Quaterniond fallback = xgc2_math::normalizedQuaternion(invalid);
     EXPECT_NEAR(fallback.w(), 1.0, 1.0e-12);
     EXPECT_NEAR(fallback.vec().norm(), 0.0, 1.0e-12);
 }
@@ -117,7 +117,6 @@ TEST(RigidStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsState
     input.vrpn_pose = makePose(1.01, Eigen::Vector3d(0.01, 0.0, 0.0));
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
-    runtime.processVrpnInput();
 
     const auto output = runtime.refreshOutputSnapshot();
     EXPECT_FALSE(output.last_pose_accepted);
@@ -154,7 +153,6 @@ TEST(RigidStateRuntimeTest, VrpnVelocityMeasurementCorrectsInertialVelocityDrift
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_VELOCITY_UPDATED, 1.1), input)
             .ok());
-    runtime.processVrpnVelocityInput();
 
     const auto output = runtime.refreshOutputSnapshot();
     EXPECT_NEAR(output.state.velocity.x(), 0.0, 0.01);
@@ -179,7 +177,6 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     input.vrpn_pose = makePose(1.01, Eigen::Vector3d(1.0, 0.0, 0.0));
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
-    runtime.processVrpnInput();
     auto output = runtime.refreshOutputSnapshot();
     EXPECT_NE(output.flags & kInnovationRejected, 0u);
     EXPECT_NE(output.flags & kVrpnSuspected, 0u);
@@ -189,7 +186,6 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     input.vrpn_pose = makePose(1.02, Eigen::Vector3d(1.0, 0.0, 0.0));
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.02), input).ok());
-    runtime.processVrpnInput();
     output = runtime.refreshOutputSnapshot();
     EXPECT_NE(output.flags & kVrpnFault, 0u);
     EXPECT_NE(output.flags & kFilterImuOnly, 0u);
@@ -198,7 +194,6 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     input.vrpn_pose = makePose(1.03, Eigen::Vector3d::Zero());
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.03), input).ok());
-    runtime.processVrpnInput();
     output = runtime.refreshOutputSnapshot();
     EXPECT_TRUE(output.last_pose_accepted);
     EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kNone);
@@ -209,7 +204,6 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     input.vrpn_pose = makePose(1.04, Eigen::Vector3d::Zero());
     ASSERT_TRUE(
         runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.04), input).ok());
-    runtime.processVrpnInput();
     output = runtime.refreshOutputSnapshot();
     EXPECT_TRUE(output.last_pose_accepted);
     EXPECT_EQ(output.vrpn_observation_state, xgc2_math::VrpnObservationState::kTrusted);
@@ -218,19 +212,19 @@ TEST(RigidStateRuntimeTest, VrpnFaultFlagsAndFilteredVisionPoseRecover) {
     EXPECT_NEAR(output.corrected_vision_pose.position.x(), output.state.position.x(), 1.0e-12);
 }
 
-TEST(RigidStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenFaults) {
+TEST(RigidStateHealthTest, InitializedEstimatorCoastsOnShortVrpnLossThenReturnsSelfCheck) {
     VrpnPx4RotorStateEstimatorConfig config = testConfig();
     VrpnPx4RotorStateEstimatorInput input;
     input.imu = makeImu(10.0, Eigen::Vector3d::Zero(), Eigen::Vector3d(0.0, 0.0, 9.8066));
     input.vrpn_pose = makePose(9.7, Eigen::Vector3d::Zero());
 
     auto health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.0);
-    EXPECT_EQ(health.state, state_type::Coasting);
+    EXPECT_EQ(health.condition, HealthCondition::kVrpnLossCoastable);
     EXPECT_NE(health.flags & kCoasting, 0u);
 
     health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.6);
-    EXPECT_EQ(health.state, state_type::Fault);
-    EXPECT_NE(health.flags & kFault, 0u);
+    EXPECT_EQ(health.condition, HealthCondition::kInputUnhealthy);
+    EXPECT_EQ(health.flags & kCoasting, 0u);
 }
 
 TEST(RigidStateHealthTest, DuplicateTimestampCanRemainRunningWhenSamplesAreFresh) {
@@ -244,7 +238,7 @@ TEST(RigidStateHealthTest, DuplicateTimestampCanRemainRunningWhenSamplesAreFresh
     input.vrpn_pose.estimated_rate_hz = config.min_vrpn_rate_hz + 1.0;
 
     const auto health = health_checks::classify(input, config, true, false, 1.0, 0u, 10.0);
-    EXPECT_EQ(health.state, state_type::Running);
+    EXPECT_EQ(health.condition, HealthCondition::kEstimationReady);
     EXPECT_EQ(health.flags & kTimeJump, 0u);
     EXPECT_EQ(health.flags & kCoasting, 0u);
     EXPECT_TRUE(health.imu_ready);
