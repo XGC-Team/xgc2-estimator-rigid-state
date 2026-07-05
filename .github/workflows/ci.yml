@@ -48,6 +48,7 @@ jobs:
             ros-noetic-message-generation \
             ros-noetic-roscpp \
             ros-noetic-rospy \
+            ros-noetic-xgc2-estimator-rigid-state-msgs \
             ros-noetic-xgc2-ros1-utils \
             ros-noetic-sensor-msgs \
             ros-noetic-std-msgs
@@ -92,6 +93,7 @@ jobs:
             ros-noetic-roslaunch \
             ros-noetic-rospack \
             ros-noetic-rospy \
+            ros-noetic-xgc2-estimator-rigid-state-msgs \
             ros-noetic-xgc2-ros1-utils \
             ros-noetic-sensor-msgs \
             ros-noetic-std-msgs
@@ -122,7 +124,7 @@ jobs:
           set +u
           source devel/setup.bash
           set -u
-          test "$(rospack find rigid_state_estimator_msgs)" = "$work_dir/src/estimator-rigid-state/rigid_state_estimator_msgs"
+          test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/noetic/share/rigid_state_estimator_msgs"
           test "$(rospack find estimator_vrpn_px4_rotor_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state"
           test "$(rospack find estimator_vrpn_ugv_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_ugv_state"
           roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch >/tmp/xgc2-vrpn-px4-rotor-state-estimator-files.txt

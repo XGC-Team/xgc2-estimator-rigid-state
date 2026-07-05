@@ -69,8 +69,10 @@ docker run --rm \
       ros-noetic-message-generation \
       ros-noetic-roscpp \
       ros-noetic-roslaunch \
+      ros-noetic-rosmsg \
       ros-noetic-rospack \
       ros-noetic-rospy \
+      ros-noetic-xgc2-estimator-rigid-state-msgs \
       ros-noetic-xgc2-ros1-utils \
       ros-noetic-sensor-msgs \
       ros-noetic-std-msgs
