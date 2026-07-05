@@ -5,7 +5,7 @@ ROS1 VRPN PX4 rotor state estimator for XGC2 UAV control stacks.
 The package subscribes to raw IMU and Gazebo/VRPN pose, runs the shared
 `xgc2_math::InertialPoseEskf` core estimator, and publishes:
 
-- `alg/state_estimator/state`: `estimator_vrpn_px4_rotor_state/RigidStateEstimate`
+- `alg/state_estimator/state`: `rigid_state_estimator_msgs/RigidStateEstimate`
 - `mavros/vision_pose/pose`: corrected VRPN pose for PX4 vision input
 
 The nonlinear estimation algorithm is owned by `libxgc2-math-dev`; this

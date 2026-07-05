@@ -4,7 +4,7 @@ project(estimator_vrpn_px4_rotor_state)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   mavros_msgs
-  message_generation
+  rigid_state_estimator_msgs
   roscpp
   rospy
   ros1_utils
@@ -16,21 +16,10 @@ find_package(Eigen3 REQUIRED)
 find_package(xgc2_math REQUIRED CONFIG)
 find_package(xgc2_state_machine REQUIRED CONFIG)
 
-add_message_files(
-  FILES
-  RigidStateEstimate.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-  std_msgs
-)
-
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_px4_rotor_state_core estimator_vrpn_px4_rotor_state_ros
-  CATKIN_DEPENDS geometry_msgs mavros_msgs message_runtime roscpp rospy ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs mavros_msgs rigid_state_estimator_msgs roscpp rospy ros1_utils sensor_msgs std_msgs
   DEPENDS EIGEN3
 )
 
@@ -39,32 +28,8 @@ catkin_install_python(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-set(PRIVATE_GENERATED_INCLUDE_DIR
-  ${CMAKE_CURRENT_BINARY_DIR}/private_generated_include
-)
-set(PRIVATE_RIGID_STATE_HEADER
-  ${PRIVATE_GENERATED_INCLUDE_DIR}/${PROJECT_NAME}/RigidStateEstimate.h
-)
-
-add_custom_command(
-  OUTPUT ${PRIVATE_RIGID_STATE_HEADER}
-  COMMAND ${CMAKE_COMMAND} -E make_directory
-          ${PRIVATE_GENERATED_INCLUDE_DIR}/${PROJECT_NAME}
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}/RigidStateEstimate.h
-          ${PRIVATE_RIGID_STATE_HEADER}
-  DEPENDS ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}/RigidStateEstimate.h
-)
-add_custom_target(${PROJECT_NAME}_private_generated_headers
-  DEPENDS ${PRIVATE_RIGID_STATE_HEADER}
-)
-add_dependencies(${PROJECT_NAME}_private_generated_headers
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-)
-
 include_directories(
   BEFORE
-  ${PRIVATE_GENERATED_INCLUDE_DIR}
   ${CATKIN_DEVEL_PREFIX}/include
   include
 )
@@ -99,15 +64,10 @@ add_library(estimator_vrpn_px4_rotor_state_ros
   src/output/rigid_state_output_consumer.cpp
 )
 add_dependencies(estimator_vrpn_px4_rotor_state_ros
-  ${PROJECT_NAME}_private_generated_headers
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_compile_features(estimator_vrpn_px4_rotor_state_ros PUBLIC cxx_std_17)
-target_include_directories(estimator_vrpn_px4_rotor_state_ros
-  BEFORE PRIVATE
-  ${PRIVATE_GENERATED_INCLUDE_DIR}
-)
 target_link_libraries(estimator_vrpn_px4_rotor_state_ros
   estimator_vrpn_px4_rotor_state_core
   xgc2_state_machine::state_machine
@@ -118,15 +78,10 @@ add_executable(vrpn_px4_rotor_state_estimator_node
   src/vrpn_px4_rotor_state_estimator_main.cpp
 )
 add_dependencies(vrpn_px4_rotor_state_estimator_node
-  ${PROJECT_NAME}_private_generated_headers
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
 )
 target_compile_features(vrpn_px4_rotor_state_estimator_node PUBLIC cxx_std_17)
-target_include_directories(vrpn_px4_rotor_state_estimator_node
-  BEFORE PRIVATE
-  ${PRIVATE_GENERATED_INCLUDE_DIR}
-)
 target_link_libraries(vrpn_px4_rotor_state_estimator_node
   estimator_vrpn_px4_rotor_state_ros
   ${catkin_LIBRARIES}
@@ -170,8 +125,4 @@ install(DIRECTORY scripts/
   USE_SOURCE_PERMISSIONS
   PATTERN "__pycache__" EXCLUDE
   PATTERN "*.pyc" EXCLUDE
-)
-
-install(DIRECTORY msg/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/msg
 )

@@ -3,7 +3,7 @@ project(estimator_vrpn_ugv_state)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
-  message_generation
+  rigid_state_estimator_msgs
   roscpp
   ros1_utils
   sensor_msgs
@@ -14,21 +14,10 @@ find_package(Eigen3 REQUIRED)
 find_package(xgc2_math REQUIRED CONFIG)
 find_package(xgc2_state_machine REQUIRED CONFIG)
 
-add_message_files(
-  FILES
-  PlanarStateEstimate.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-  std_msgs
-)
-
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_ugv_state_core estimator_vrpn_ugv_state_ros
-  CATKIN_DEPENDS geometry_msgs message_runtime roscpp ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs rigid_state_estimator_msgs roscpp ros1_utils sensor_msgs std_msgs
   DEPENDS EIGEN3
 )
 
@@ -116,8 +105,4 @@ install(DIRECTORY config/
 
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
-
-install(DIRECTORY msg/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/msg
 )

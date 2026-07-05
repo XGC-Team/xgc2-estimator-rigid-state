@@ -54,7 +54,7 @@ geometry_msgs::Vector3 yawRateToVector3(double yaw_rate) {
 }
 
 std::unique_ptr<::state_machine::runtime::Task<ros::NodeHandle>> makePublishStateTask(
-    ros::Publisher state_pub, estimator_vrpn_ugv_state::PlanarStateEstimate state_msg) {
+    ros::Publisher state_pub, rigid_state_estimator_msgs::PlanarStateEstimate state_msg) {
     return std::make_unique<::state_machine::runtime::LambdaTask<ros::NodeHandle>>(
         "PublishPlanarStateEstimate",
         [state_pub = std::move(state_pub), state_msg = std::move(state_msg)](
@@ -67,8 +67,8 @@ PlanarStateOutputConsumer::PlanarStateOutputConsumer(
     ros::NodeHandle& nh, ::state_machine::runtime::AsyncTaskExecutor<ros::NodeHandle>& executor,
     VrpnUgvStateEstimatorRuntime& runtime, std::string state_topic, uint32_t queue_size)
     : executor_(executor), runtime_(runtime) {
-    state_pub_ = nh.advertise<estimator_vrpn_ugv_state::PlanarStateEstimate>(std::move(state_topic),
-                                                                             queue_size);
+    state_pub_ = nh.advertise<rigid_state_estimator_msgs::PlanarStateEstimate>(
+        std::move(state_topic), queue_size);
 }
 
 bool PlanarStateOutputConsumer::handle(const ::state_machine::Event& event) {
@@ -81,9 +81,9 @@ bool PlanarStateOutputConsumer::handle(const ::state_machine::Event& event) {
     return true;
 }
 
-estimator_vrpn_ugv_state::PlanarStateEstimate PlanarStateOutputConsumer::makeStateMessage(
+rigid_state_estimator_msgs::PlanarStateEstimate PlanarStateOutputConsumer::makeStateMessage(
     const VrpnUgvStateEstimatorOutput& output, const ros::Time& stamp) {
-    estimator_vrpn_ugv_state::PlanarStateEstimate msg;
+    rigid_state_estimator_msgs::PlanarStateEstimate msg;
     msg.header.stamp = stamp;
     msg.estimator_state = output.estimator_state;
     msg.flags = output.flags;

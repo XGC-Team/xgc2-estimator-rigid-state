@@ -1,7 +1,7 @@
 #include "estimator_vrpn_px4_rotor_state/output/rigid_state_output_consumer.h"
 
-#include <estimator_vrpn_px4_rotor_state/RigidStateEstimate.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <rigid_state_estimator_msgs/RigidStateEstimate.h>
 
 #include <memory>
 #include <utility>
@@ -44,7 +44,7 @@ geometry_msgs::Quaternion toQuaternion(const Eigen::Quaterniond& value) {
 }
 
 std::unique_ptr<::state_machine::runtime::Task<ros::NodeHandle>> makePublishStateTask(
-    ros::Publisher state_pub, estimator_vrpn_px4_rotor_state::RigidStateEstimate state_msg) {
+    ros::Publisher state_pub, rigid_state_estimator_msgs::RigidStateEstimate state_msg) {
     return std::make_unique<::state_machine::runtime::LambdaTask<ros::NodeHandle>>(
         "PublishRigidStateEstimate",
         [state_pub = std::move(state_pub), state_msg = std::move(state_msg)](
@@ -61,7 +61,7 @@ std::unique_ptr<::state_machine::runtime::Task<ros::NodeHandle>> makePublishVisi
         });
 }
 
-estimator_vrpn_px4_rotor_state::RigidStateEstimate makeStateMessage(
+rigid_state_estimator_msgs::RigidStateEstimate makeStateMessage(
     const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp);
 geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimatorOutput& output,
                                                  const ros::Time& stamp);
@@ -74,7 +74,7 @@ RigidStateOutputConsumer::RigidStateOutputConsumer(
     VrpnPx4RotorStateEstimatorRuntime& runtime, std::string state_topic,
     std::string vision_pose_topic, uint32_t queue_size)
     : executor_(executor), runtime_(runtime) {
-    state_pub_ = nh.advertise<estimator_vrpn_px4_rotor_state::RigidStateEstimate>(
+    state_pub_ = nh.advertise<rigid_state_estimator_msgs::RigidStateEstimate>(
         std::move(state_topic), queue_size);
     vision_pose_pub_ =
         nh.advertise<geometry_msgs::PoseStamped>(std::move(vision_pose_topic), queue_size);
@@ -102,9 +102,9 @@ bool RigidStateOutputConsumer::handle(const ::state_machine::Event& event) {
 
 namespace {
 
-estimator_vrpn_px4_rotor_state::RigidStateEstimate makeStateMessage(
+rigid_state_estimator_msgs::RigidStateEstimate makeStateMessage(
     const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp) {
-    estimator_vrpn_px4_rotor_state::RigidStateEstimate msg;
+    rigid_state_estimator_msgs::RigidStateEstimate msg;
     msg.header.stamp = stamp;
     msg.estimator_state = output.estimator_state;
     msg.flags = output.flags;

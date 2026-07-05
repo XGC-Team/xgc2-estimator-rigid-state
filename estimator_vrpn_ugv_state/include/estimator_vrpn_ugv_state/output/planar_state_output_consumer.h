@@ -1,6 +1,6 @@
 #pragma once
 
-#include <estimator_vrpn_ugv_state/PlanarStateEstimate.h>
+#include <rigid_state_estimator_msgs/PlanarStateEstimate.h>
 #include <ros/ros.h>
 
 #include <state_machine/runtime/async_task_executor.hpp>
@@ -24,7 +24,7 @@ class PlanarStateOutputConsumer final : public ::state_machine::runtime::EventCo
     }
     bool handle(const ::state_machine::Event& event) override;
 
-    static estimator_vrpn_ugv_state::PlanarStateEstimate makeStateMessage(
+    static rigid_state_estimator_msgs::PlanarStateEstimate makeStateMessage(
         const VrpnUgvStateEstimatorOutput& output, const ros::Time& stamp);
 
    private:
