@@ -38,14 +38,14 @@ inline HealthStatus classify(const VrpnPx4RotorStateEstimatorInput& input,
     }
 
     const bool imu_stale =
-        input.imu.received && xgc2_math::sampleStale(now_sec, input.imu.stamp_sec,
-                                                     config.imu_timeout_s);
+        input.imu.received &&
+        xgc2_math::sampleStale(now_sec, input.imu.stamp_sec, config.imu_timeout_s);
     const bool vrpn_stale =
-        input.vrpn_pose.received && xgc2_math::sampleStale(now_sec, input.vrpn_pose.stamp_sec,
-                                                           config.vrpn_timeout_s);
+        input.vrpn_pose.received &&
+        xgc2_math::sampleStale(now_sec, input.vrpn_pose.stamp_sec, config.vrpn_timeout_s);
     const bool vrpn_loss_coastable =
-        input.vrpn_pose.received && !xgc2_math::sampleStale(now_sec, input.vrpn_pose.stamp_sec,
-                                                            config.coasting_timeout_s);
+        input.vrpn_pose.received &&
+        !xgc2_math::sampleStale(now_sec, input.vrpn_pose.stamp_sec, config.coasting_timeout_s);
     if (imu_stale) {
         flags |= kImuStale;
     }
@@ -65,11 +65,10 @@ inline HealthStatus classify(const VrpnPx4RotorStateEstimatorInput& input,
     }
 
     const bool imu_ready = input.imu.received && input.imu.valid && !input.imu.time_jump &&
-                           input.imu.last_dt_sec <= config.max_time_jump_s &&
-                           !imu_stale;
-    const bool vrpn_ready =
-        input.vrpn_pose.received && input.vrpn_pose.valid && !input.vrpn_pose.time_jump &&
-        input.vrpn_pose.last_dt_sec <= config.max_time_jump_s && !vrpn_stale;
+                           input.imu.last_dt_sec <= config.max_time_jump_s && !imu_stale;
+    const bool vrpn_ready = input.vrpn_pose.received && input.vrpn_pose.valid &&
+                            !input.vrpn_pose.time_jump &&
+                            input.vrpn_pose.last_dt_sec <= config.max_time_jump_s && !vrpn_stale;
 
     health.imu_ready = imu_ready;
     health.vrpn_ready = vrpn_ready;

@@ -54,11 +54,13 @@ echo "Running clang-format..."
   cd "${REPO_ROOT}"
   tmp_format_dir="$(mktemp -d)"
   trap 'rm -rf "${tmp_format_dir}"' EXIT
+  format_status=0
   for file in "${CXX_FILES[@]}"; do
     mkdir -p "${tmp_format_dir}/$(dirname "${file}")"
     clang-format "${file}" > "${tmp_format_dir}/${file}"
-    diff -u "${file}" "${tmp_format_dir}/${file}"
+    diff -u "${file}" "${tmp_format_dir}/${file}" || format_status=1
   done
+  exit "${format_status}"
 )
 
 WORK_DIR="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/xgc2-rigid-state-cpp-quality"
