@@ -24,8 +24,7 @@ Eigen::Vector3d pointToEigen(const geometry_msgs::Point& value) {
 }
 
 Eigen::Quaterniond toEigen(const geometry_msgs::Quaternion& value) {
-    return xgc2_math::normalizedQuaternion(
-        Eigen::Quaterniond(value.w, value.x, value.y, value.z));
+    return xgc2_math::normalizedQuaternion(Eigen::Quaterniond(value.w, value.x, value.y, value.z));
 }
 
 bool isValidQuaternion(const geometry_msgs::Quaternion& value) {
@@ -33,7 +32,8 @@ bool isValidQuaternion(const geometry_msgs::Quaternion& value) {
     return xgc2_math::isFinite(q) && q.norm() > 1.0e-9;
 }
 
-template <typename Sample> void updateSampleTiming(Sample& sample, double stamp_sec) {
+template <typename Sample>
+void updateSampleTiming(Sample& sample, double stamp_sec) {
     const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
     const double raw_dt_sec = ros1_utils::samplePeriodSec(has_prev, sample.stamp_sec, stamp_sec);
     const bool finite_dt = std::isfinite(raw_dt_sec);
