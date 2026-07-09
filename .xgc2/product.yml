@@ -5,27 +5,27 @@ version: 1.1.6-1
 kind: ros1-apt
 summary: VRPN/IMU rigid state estimation packages for PX4 rotor UAVs and UGVs.
 ros:
-  distro: noetic
+  distro: melodic
   packages:
   - estimator_vrpn_px4_rotor_state
   - estimator_vrpn_ugv_state
 apt:
-  distribution: focal
+  distribution: bionic
   install:
-  - ros-noetic-xgc2-estimator-rigid-state
+  - ros-melodic-xgc2-estimator-rigid-state
   packages:
-  - ros-noetic-xgc2-estimator-rigid-state
+  - ros-melodic-xgc2-estimator-rigid-state
   depends:
-  - libxgc2-math-dev (>= 0.5.5-6)
-  - libxgc2-state-machine-dev (>= 0.1.2-5~focal)
-  - ros-noetic-xgc2-estimator-rigid-state-msgs (>= 1.2.0-1)
-  - ros-noetic-mavros-msgs
-  - ros-noetic-rospy
-  - ros-noetic-xgc2-ros1-utils
+  - libxgc2-math-dev (>= 0.5.6-2~bionic)
+  - libxgc2-state-machine-dev (>= 0.1.3-2~bionic)
+  - ros-melodic-xgc2-estimator-rigid-state-msgs (>= 1.2.0-1)
+  - ros-melodic-mavros-msgs
+  - ros-melodic-rospy
+  - ros-melodic-xgc2-ros1-utils
 usage:
   install: 'sudo apt update
 
-    sudo apt install ros-noetic-xgc2-estimator-rigid-state
+    sudo apt install ros-melodic-xgc2-estimator-rigid-state
 
     '
   smoke_test: 'roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch
@@ -35,13 +35,13 @@ usage:
     '
 ownership:
   paths:
-  - /opt/ros/noetic/share/estimator_vrpn_px4_rotor_state
-  - /opt/ros/noetic/include/estimator_vrpn_px4_rotor_state
-  - /opt/ros/noetic/lib/estimator_vrpn_px4_rotor_state
-  - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_core.so
-  - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_ros.so
-  - /opt/ros/noetic/share/estimator_vrpn_ugv_state
-  - /opt/ros/noetic/include/estimator_vrpn_ugv_state
-  - /opt/ros/noetic/lib/estimator_vrpn_ugv_state
-  - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_core.so
-  - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_ros.so
+  - /opt/ros/melodic/share/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/include/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/lib/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_core.so
+  - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_ros.so
+  - /opt/ros/melodic/share/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/include/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/lib/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/lib/libestimator_vrpn_ugv_state_core.so
+  - /opt/ros/melodic/lib/libestimator_vrpn_ugv_state_ros.so

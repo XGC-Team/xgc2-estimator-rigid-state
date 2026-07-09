@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-DOCKER_IMAGE="${DOCKER_IMAGE:-ros:noetic-ros-base-focal}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-ros:melodic-ros-base-bionic}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/docker}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/debs}"
 INSTALL_CHECK="${INSTALL_CHECK:-true}"
@@ -50,7 +50,7 @@ docker run --rm \
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates
-    echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink focal main" \
+    echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink bionic main" \
       > /etc/apt/sources.list.d/xgc2.list
     apt-get update
     apt-get install -y --no-install-recommends \
@@ -64,18 +64,18 @@ docker run --rm \
       libxgc2-math-dev \
       libxgc2-state-machine-dev \
       rsync \
-      ros-noetic-geometry-msgs \
-      ros-noetic-mavros-msgs \
-      ros-noetic-message-generation \
-      ros-noetic-roscpp \
-      ros-noetic-roslaunch \
-      ros-noetic-rosmsg \
-      ros-noetic-rospack \
-      ros-noetic-rospy \
-      ros-noetic-xgc2-estimator-rigid-state-msgs \
-      ros-noetic-xgc2-ros1-utils \
-      ros-noetic-sensor-msgs \
-      ros-noetic-std-msgs
+      ros-melodic-geometry-msgs \
+      ros-melodic-mavros-msgs \
+      ros-melodic-message-generation \
+      ros-melodic-roscpp \
+      ros-melodic-roslaunch \
+      ros-melodic-rosmsg \
+      ros-melodic-rospack \
+      ros-melodic-rospy \
+      ros-melodic-xgc2-estimator-rigid-state-msgs \
+      ros-melodic-xgc2-ros1-utils \
+      ros-melodic-sensor-msgs \
+      ros-melodic-std-msgs
 
     rm -rf /workspace/work/src /workspace/work/build /workspace/work/devel /workspace/work/install-root
     mkdir -p /workspace/work/src/estimator-rigid-state
@@ -83,10 +83,10 @@ docker run --rm \
 
     cd /workspace/work
     set +u
-    source /opt/ros/noetic/setup.bash
+    source /opt/ros/melodic/setup.bash
     set -u
     DESTDIR=/workspace/work/install-root catkin_make install \
-      -DCMAKE_INSTALL_PREFIX=/opt/ros/noetic \
+      -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
       -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"

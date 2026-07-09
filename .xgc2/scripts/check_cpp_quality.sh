@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-ROS_DISTRO="${ROS_DISTRO:-noetic}"
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
 
 require_command() {
   local command_name="$1"
@@ -52,7 +52,13 @@ fi
 echo "Running clang-format..."
 (
   cd "${REPO_ROOT}"
-  clang-format --dry-run --Werror "${CXX_FILES[@]}"
+  tmp_format_dir="$(mktemp -d)"
+  trap 'rm -rf "${tmp_format_dir}"' EXIT
+  for file in "${CXX_FILES[@]}"; do
+    mkdir -p "${tmp_format_dir}/$(dirname "${file}")"
+    clang-format "${file}" > "${tmp_format_dir}/${file}"
+    diff -u "${file}" "${tmp_format_dir}/${file}"
+  done
 )
 
 WORK_DIR="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/xgc2-rigid-state-cpp-quality"

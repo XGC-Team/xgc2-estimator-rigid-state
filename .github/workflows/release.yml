@@ -43,7 +43,7 @@ jobs:
       - name: Validate expected version and source SHA
         run: |
           set -euo pipefail
-          actual_version="$(awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' .xgc2/product.yml)"
+          actual_version="$(sed -n 's/^version:[[:space:]]*//p' .xgc2/product.yml | head -n 1)"
           actual_sha="$(git rev-parse HEAD)"
           test "${actual_version}" = "${{ inputs.expected_version }}"
           test "${actual_sha}" = "${{ inputs.expected_source_sha }}"
@@ -53,7 +53,7 @@ jobs:
     if: ${{ inputs.run_cpp_quality }}
     needs: validate-release-inputs
     runs-on: ubuntu-latest
-    container: ros:noetic-ros-base-focal
+    container: ros:melodic-ros-base-bionic
     steps:
       - name: Install checkout dependencies
         run: |
@@ -68,7 +68,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates
-          echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink focal main" \
+          echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink bionic main" \
             > /etc/apt/sources.list.d/xgc2.list
           apt-get update
           apt-get install -y --no-install-recommends \
@@ -80,15 +80,15 @@ jobs:
             libxgc2-math-dev \
             libxgc2-state-machine-dev \
             rsync \
-            ros-noetic-geometry-msgs \
-            ros-noetic-mavros-msgs \
-            ros-noetic-message-generation \
-            ros-noetic-roscpp \
-            ros-noetic-rospy \
-            ros-noetic-xgc2-estimator-rigid-state-msgs \
-            ros-noetic-xgc2-ros1-utils \
-            ros-noetic-sensor-msgs \
-            ros-noetic-std-msgs
+            ros-melodic-geometry-msgs \
+            ros-melodic-mavros-msgs \
+            ros-melodic-message-generation \
+            ros-melodic-roscpp \
+            ros-melodic-rospy \
+            ros-melodic-xgc2-estimator-rigid-state-msgs \
+            ros-melodic-xgc2-ros1-utils \
+            ros-melodic-sensor-msgs \
+            ros-melodic-std-msgs
 
       - name: Run C++ quality gate
         run: .xgc2/scripts/check_cpp_quality.sh
@@ -97,7 +97,7 @@ jobs:
     name: Source build and tests
     needs: validate-release-inputs
     runs-on: ubuntu-latest
-    container: ros:noetic-ros-base-focal
+    container: ros:melodic-ros-base-bionic
     steps:
       - name: Skip source tests
         if: ${{ !inputs.run_source_tests }}
@@ -121,7 +121,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates
-          echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink focal main" \
+          echo "deb [trusted=yes arch=$(dpkg --print-architecture)] https://xgc2.apt.xiaokang.ink bionic main" \
             > /etc/apt/sources.list.d/xgc2.list
           apt-get update
           apt-get install -y --no-install-recommends \
@@ -131,17 +131,17 @@ jobs:
             libxgc2-math-dev \
             libxgc2-state-machine-dev \
             rsync \
-            ros-noetic-geometry-msgs \
-            ros-noetic-mavros-msgs \
-            ros-noetic-message-generation \
-            ros-noetic-roscpp \
-            ros-noetic-roslaunch \
-            ros-noetic-rospack \
-            ros-noetic-rospy \
-            ros-noetic-xgc2-estimator-rigid-state-msgs \
-            ros-noetic-xgc2-ros1-utils \
-            ros-noetic-sensor-msgs \
-            ros-noetic-std-msgs
+            ros-melodic-geometry-msgs \
+            ros-melodic-mavros-msgs \
+            ros-melodic-message-generation \
+            ros-melodic-roscpp \
+            ros-melodic-roslaunch \
+            ros-melodic-rospack \
+            ros-melodic-rospy \
+            ros-melodic-xgc2-estimator-rigid-state-msgs \
+            ros-melodic-xgc2-ros1-utils \
+            ros-melodic-sensor-msgs \
+            ros-melodic-std-msgs
 
       - name: Check package metadata
         if: inputs.run_source_tests
@@ -161,17 +161,17 @@ jobs:
 
           cd "$work_dir"
           set +u
-          source /opt/ros/noetic/setup.bash
+          source /opt/ros/melodic/setup.bash
           set -u
           catkin_make run_tests_estimator_vrpn_px4_rotor_state run_tests_estimator_vrpn_ugv_state
           catkin_test_results
           DESTDIR="$install_root" catkin_make install \
-            -DCMAKE_INSTALL_PREFIX=/opt/ros/noetic \
+            -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
             -DCMAKE_BUILD_TYPE=Release
           set +u
           source devel/setup.bash
           set -u
-          test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/noetic/share/rigid_state_estimator_msgs"
+          test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/melodic/share/rigid_state_estimator_msgs"
           test "$(rospack find estimator_vrpn_px4_rotor_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state"
           test "$(rospack find estimator_vrpn_ugv_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_ugv_state"
           roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch >/tmp/xgc2-vrpn-px4-rotor-state-estimator-files.txt

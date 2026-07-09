@@ -3,7 +3,7 @@ set -euo pipefail
 
 INSTALL_ROOT=""
 OUTPUT_DIR=""
-ROS_DISTRO="${ROS_DISTRO:-noetic}"
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 PACKAGE="ros-${ROS_DISTRO}-xgc2-estimator-rigid-state"
@@ -19,7 +19,7 @@ ROS_LIBRARIES=(
 )
 
 product_version() {
-  awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' "${REPO_ROOT}/.xgc2/product.yml"
+  sed -n 's/^version:[[:space:]]*//p' "${REPO_ROOT}/.xgc2/product.yml" | head -n 1
 }
 
 VERSION="${PACKAGE_VERSION:-$(product_version)}"
@@ -101,7 +101,7 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-1), libxgc2-math-dev (>= 0.5.5-6), libxgc2-state-machine-dev (>= 0.1.2-5~focal), ros-${ROS_DISTRO}-xgc2-ros1-utils, ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-mavros-msgs, ros-${ROS_DISTRO}-rospy
+Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-1), libxgc2-math-dev (>= 0.5.6-2~bionic), libxgc2-state-machine-dev (>= 0.1.3-2~bionic), ros-${ROS_DISTRO}-xgc2-ros1-utils, ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-mavros-msgs, ros-${ROS_DISTRO}-rospy
 Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UGVs
 EOF
 printf 'xgc2-estimator-rigid-state package\n' > "${pkg_root}/usr/share/doc/${PACKAGE}/README"
