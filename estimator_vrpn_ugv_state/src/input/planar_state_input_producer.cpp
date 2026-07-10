@@ -1,13 +1,13 @@
 #include "estimator_vrpn_ugv_state/input/planar_state_input_producer.h"
 
 #include <ros1_utils/time_utils.h>
-#include <xgc2_math/geometry/se3.hpp>
 
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <utility>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include "estimator_vrpn_ugv_state/common/event_types.h"
 
@@ -34,7 +34,8 @@ double yawFromQuaternion(const geometry_msgs::Quaternion& value) {
     return xgc2_math::normalizeAngle(std::atan2(siny_cosp, cosy_cosp));
 }
 
-template <typename Sample> void updateSampleTiming(Sample& sample, double stamp_sec) {
+template <typename Sample>
+void updateSampleTiming(Sample& sample, double stamp_sec) {
     const bool has_prev = sample.received && std::isfinite(sample.stamp_sec);
     const double raw_dt_sec = ros1_utils::samplePeriodSec(has_prev, sample.stamp_sec, stamp_sec);
     const bool finite_dt = std::isfinite(raw_dt_sec);

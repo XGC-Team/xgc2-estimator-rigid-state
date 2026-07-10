@@ -1,11 +1,11 @@
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node.h"
 
 #include <ros1_utils/param_utils.h>
-#include <xgc2_math/geometry/se3.hpp>
 
 #include <cmath>
 #include <memory>
 #include <utility>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include "estimator_vrpn_px4_rotor_state/common/config_utils.h"
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"

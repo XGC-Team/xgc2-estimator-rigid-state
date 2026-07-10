@@ -2,10 +2,10 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <rigid_state_estimator_msgs/RigidStateEstimate.h>
-#include <xgc2_math/geometry/se3.hpp>
 
 #include <memory>
 #include <utility>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"

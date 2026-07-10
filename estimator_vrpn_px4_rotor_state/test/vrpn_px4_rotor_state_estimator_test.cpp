@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include <xgc2_math/geometry/se3.hpp>
 
 #include <cmath>
 #include <limits>
+#include <xgc2_math/geometry/se3.hpp>
 
 #include "estimator_vrpn_px4_rotor_state/common/health_checks.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
