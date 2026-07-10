@@ -101,7 +101,7 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-1), libxgc2-math-dev (>= 0.5.5-6), libxgc2-state-machine-dev (>= 0.1.2-5~focal), ros-${ROS_DISTRO}-xgc2-ros1-utils, ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-mavros-msgs, ros-${ROS_DISTRO}-rospy
+Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-3), libxgc2-math-dev (>= 0.5.6-5~focal), libxgc2-state-machine-dev (>= 0.1.3-4~focal), ros-${ROS_DISTRO}-xgc2-ros1-utils (>= 1.1.1-3), ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-mavros-msgs, ros-${ROS_DISTRO}-rospy
 Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UGVs
 EOF
 printf 'xgc2-estimator-rigid-state package\n' > "${pkg_root}/usr/share/doc/${PACKAGE}/README"
