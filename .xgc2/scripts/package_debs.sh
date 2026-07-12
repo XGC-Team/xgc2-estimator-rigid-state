@@ -106,8 +106,18 @@ Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UG
 EOF
 printf 'xgc2-estimator-rigid-state package\n' > "${pkg_root}/usr/share/doc/${PACKAGE}/README"
 find "${pkg_root}" -type d -exec chmod 0755 {} +
-find "${pkg_root}" -type f -exec chmod 0644 {} +
 chmod 0755 "${pkg_root}/DEBIAN"
+chmod 0644 "${pkg_root}/DEBIAN/control" "${pkg_root}/usr/share/doc/${PACKAGE}/README"
+
+for executable in \
+  "${pkg_root}${PREFIX}/lib/estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node" \
+  "${pkg_root}${PREFIX}/lib/estimator_vrpn_px4_rotor_state/request_highres_imu_rate.py" \
+  "${pkg_root}${PREFIX}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"; do
+  if [[ ! -x "${executable}" ]]; then
+    echo "packaged ROS node is not executable: ${executable}" >&2
+    exit 1
+  fi
+done
 
 fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${PACKAGE}_${VERSION}_${ARCH}.deb" >/dev/null
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name '*.deb' -print | sort

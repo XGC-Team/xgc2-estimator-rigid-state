@@ -34,6 +34,9 @@ test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state/config/vrpn_ugv_s
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state/launch/vrpn_ugv_state_estimator.launch"
 test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_core.so"
 test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_ros.so"
+test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node"
+test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state/request_highres_imu_rate.py"
+test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^uint8 estimator_state$'
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
 rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^uint8 estimator_state$'
