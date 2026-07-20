@@ -45,3 +45,9 @@ ownership:
   - /opt/ros/noetic/lib/estimator_vrpn_ugv_state
   - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_core.so
   - /opt/ros/noetic/lib/libestimator_vrpn_ugv_state_ros.so
+release:
+  dependency_policy:
+    libxgc2-math-dev: rebuild
+    libxgc2-state-machine-dev: rebuild
+    xgc2-ros-msgs: rebuild
+    xgc2-ros1-utils: rebuild
