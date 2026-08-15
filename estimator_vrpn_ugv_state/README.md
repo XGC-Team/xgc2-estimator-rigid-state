@@ -176,7 +176,8 @@ Default topics:
 | --- | --- | --- | --- |
 | Subscribe | `mavros/imu/data_raw` | `sensor_msgs/Imu` | `angular_velocity.z`, `linear_acceleration.x/y` |
 | Subscribe | `/vrpn_client_node/ugv1/pose` | `geometry_msgs/PoseStamped` | x, y, yaw |
-| Publish | `alg/state_estimator/state` | `rigid_state_estimator_msgs/PlanarStateEstimate` | planar controller state and diagnostics |
+| Publish | `alg/state_estimator/state` | `rigid_state_estimator_msgs/PlanarStateEstimate` | planar controller state and diagnostics; `header.frame_id` is `world` |
+| TF | `world` → `estimator` | — | comparison triad for RViz; only while `Running` or `Coasting`. Does not move `base_link` |
 
 When launched under `ns:=ugv1`, relative topics are resolved below `/ugv1`.
 The default VRPN topic is absolute, so it is not remapped by the namespace
@@ -189,6 +190,9 @@ Default parameters:
 | `imu_topic` | `mavros/imu/data_raw` | Raw MAVROS IMU input topic. |
 | `vrpn_pose_topic` | `/vrpn_client_node/ugv1/pose` | VRPN or Gazebo pose input topic. |
 | `state_topic` | `alg/state_estimator/state` | Controller-facing planar state output topic. |
+| `world_frame` | `world` | Parent frame of the estimator TF and `PlanarStateEstimate.header.frame_id`. |
+| `estimator_frame` | `estimator` | Child frame of the comparison TF. Must not be `base_link`. |
+| `publish_tf` | `true` | Broadcast `world` → `estimator` while `Running` or `Coasting`. |
 | `loop_rate_hz` | `1000.0` | Main runtime update loop rate. Clamped to at most 2000 Hz. |
 | `state_publish_rate_hz` | `100.0` | Planar state estimate publish rate. |
 | `field_offset_xyz` | `[0.0, 0.0, 0.0]` | Translation of `T_WV`; z is ignored. |

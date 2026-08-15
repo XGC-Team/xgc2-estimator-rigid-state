@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros1_utils
   sensor_msgs
   std_msgs
+  tf2_ros
 )
 
 find_package(Eigen3 REQUIRED)
@@ -18,7 +19,7 @@ find_package(xgc2_state_machine REQUIRED CONFIG)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_ugv_state_core estimator_vrpn_ugv_state_ros
-  CATKIN_DEPENDS geometry_msgs nav_msgs rigid_state_estimator_msgs roscpp ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs nav_msgs rigid_state_estimator_msgs roscpp ros1_utils sensor_msgs std_msgs tf2_ros
   DEPENDS EIGEN3
 )
 

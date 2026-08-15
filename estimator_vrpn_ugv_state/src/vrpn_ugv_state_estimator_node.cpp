@@ -31,7 +31,8 @@ VrpnUgvStateEstimatorNode::VrpnUgvStateEstimatorNode(ros::NodeHandle& nh)
     runtime_.setConfig(config_);
 
     output_event_dispatcher_.addConsumer(std::make_unique<PlanarStateOutputConsumer>(
-        nh_, output_event_executor_, runtime_, state_topic_, kRosQueueSize));
+        nh_, output_event_executor_, runtime_, state_topic_, world_frame_, estimator_frame_,
+        publish_tf_, kRosQueueSize));
 
     auto post_input_event = [this](::state_machine::Event event,
                                    const VrpnUgvStateEstimatorInput& input) {
@@ -45,10 +46,11 @@ VrpnUgvStateEstimatorNode::VrpnUgvStateEstimatorNode(ros::NodeHandle& nh)
 
     ROS_INFO(
         "[VrpnUgvStateEstimatorNode] Initialized: imu=%s pose=%s transport=%s source=%s "
-        "state=%s loop=%.1f state_pub=%.1f max_pose_delay=%.3f",
+        "state=%s tf=%s->%s publish_tf=%d loop=%.1f state_pub=%.1f max_pose_delay=%.3f",
         imu_topic_.c_str(), vrpn_pose_topic_.c_str(), pose_transport_.c_str(),
-        pose_source_.c_str(), state_topic_.c_str(), loop_rate_hz_, config_.state_publish_rate_hz,
-        config_.max_pose_delay_s);
+        pose_source_.c_str(), state_topic_.c_str(), world_frame_.c_str(),
+        estimator_frame_.c_str(), publish_tf_ ? 1 : 0, loop_rate_hz_,
+        config_.state_publish_rate_hz, config_.max_pose_delay_s);
 }
 
 VrpnUgvStateEstimatorNode::~VrpnUgvStateEstimatorNode() {
@@ -82,6 +84,11 @@ void VrpnUgvStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "vrpn_pose_topic", vrpn_pose_topic_,
                                 "VRPN pose topic");
     ros1_utils::getParamWithLog(private_nh_, "state_topic", state_topic_, "State topic");
+    ros1_utils::getParamWithLog(private_nh_, "world_frame", world_frame_, "World TF frame");
+    ros1_utils::getParamWithLog(private_nh_, "estimator_frame", estimator_frame_,
+                                "Estimator TF child frame");
+    ros1_utils::getParamWithLog(private_nh_, "publish_tf", publish_tf_,
+                                "Publish world->estimator TF");
     ros1_utils::getParamWithLog(private_nh_, "pose_source", pose_source_, "Pose source vrpn|lio");
     ros1_utils::getParamWithLog(private_nh_, "pose_transport", pose_transport_,
                                 "Pose transport pose_stamped|odometry");

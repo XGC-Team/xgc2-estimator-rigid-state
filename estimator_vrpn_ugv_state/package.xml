@@ -16,6 +16,7 @@
   <depend>ros1_utils</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
   <depend>libxgc2-math-dev</depend>
   <depend version_gte="0.1.2-1~focal">libxgc2-state-machine-dev</depend>
   <depend>eigen</depend>

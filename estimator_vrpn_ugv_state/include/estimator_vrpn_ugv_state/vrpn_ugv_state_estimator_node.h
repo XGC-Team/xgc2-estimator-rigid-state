@@ -38,6 +38,9 @@ class VrpnUgvStateEstimatorNode {
     std::string imu_topic_{"mavros/imu/data_raw"};
     std::string vrpn_pose_topic_{"/vrpn_client_node/ugv1/pose"};
     std::string state_topic_{"alg/state_estimator/state"};
+    std::string world_frame_{"world"};
+    std::string estimator_frame_{"estimator"};
+    bool publish_tf_{true};
     std::string pose_source_{"vrpn"};
     std::string pose_transport_{"pose_stamped"};
     double loop_rate_hz_{1000.0};
