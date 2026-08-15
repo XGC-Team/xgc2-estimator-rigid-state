@@ -19,9 +19,11 @@ apt:
   depends:
   - libxgc2-math-dev (>= 0.5.6-6~focal)
   - libxgc2-state-machine-dev (>= 0.1.3-4~focal)
+  - ros-melodic-xgc2-estimator-rigid-state-msgs (>= 1.2.0-3)
   - ros-noetic-xgc2-estimator-rigid-state-msgs (>= 1.2.0-3)
   - ros-noetic-mavros-msgs
   - ros-noetic-rospy
+  - ros-melodic-xgc2-ros1-utils (>= 1.1.1-3)
   - ros-noetic-xgc2-ros1-utils (>= 1.1.1-3)
 usage:
   install: 'sudo apt update
