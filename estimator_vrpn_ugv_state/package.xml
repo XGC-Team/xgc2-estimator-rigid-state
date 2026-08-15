@@ -10,6 +10,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>rigid_state_estimator_msgs</depend>
   <depend>roscpp</depend>
   <depend>ros1_utils</depend>

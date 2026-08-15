@@ -50,6 +50,13 @@ struct VrpnUgvStateEstimatorConfig {
     double min_imu_rate_hz{5.0};
     double min_vrpn_rate_hz{20.0};
     double max_time_jump_s{0.25};
+    // 0 keeps VRPN behavior: any pose older than the latest IMU is rejected.
+    // LIO at 10 Hz needs ~0.2–0.3 s so the delayed scan pose can still update.
+    double max_pose_delay_s{0.0};
+    // Planar UGV IMU ax/ay leak gravity. LIO should propagate gyro only.
+    bool use_imu_horizontal_accel{true};
+    // Trusted absolute pose (LIO): a huge innovation means the filter drifted.
+    bool reinitialize_on_innovation_gate{false};
 
     double gyro_noise_std{0.03};
     double accel_noise_std{0.35};

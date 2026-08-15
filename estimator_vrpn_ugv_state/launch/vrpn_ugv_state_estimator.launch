@@ -2,6 +2,9 @@
 <launch>
   <arg name="ns" default="ugv1"/>
   <arg name="config_file" default="$(find estimator_vrpn_ugv_state)/config/vrpn_ugv_state_estimator.yaml"/>
+  <arg name="pose_source" default="vrpn"/>
+  <arg name="imu_topic" default=""/>
+  <arg name="pose_topic" default=""/>
 
   <group ns="$(arg ns)">
     <node pkg="estimator_vrpn_ugv_state"
@@ -11,6 +14,9 @@
           respawn="false"
           clear_params="true">
       <rosparam command="load" file="$(arg config_file)"/>
+      <param name="pose_source" value="$(arg pose_source)"/>
+      <param if="$(eval arg('imu_topic') != '')" name="imu_topic" value="$(arg imu_topic)"/>
+      <param if="$(eval arg('pose_topic') != '')" name="vrpn_pose_topic" value="$(arg pose_topic)"/>
     </node>
   </group>
 </launch>

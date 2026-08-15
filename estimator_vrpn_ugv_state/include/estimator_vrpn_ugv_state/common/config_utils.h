@@ -25,6 +25,9 @@ inline void normalizeConfig(VrpnUgvStateEstimatorConfig& config) {
     config.min_imu_rate_hz = positiveOr(config.min_imu_rate_hz, 5.0);
     config.min_vrpn_rate_hz = positiveOr(config.min_vrpn_rate_hz, 20.0);
     config.max_time_jump_s = positiveOr(config.max_time_jump_s, 0.25);
+    if (!std::isfinite(config.max_pose_delay_s) || config.max_pose_delay_s < 0.0) {
+        config.max_pose_delay_s = 0.0;
+    }
 
     config.gyro_noise_std = positiveOr(config.gyro_noise_std, 0.03);
     config.accel_noise_std = positiveOr(config.accel_noise_std, 0.35);

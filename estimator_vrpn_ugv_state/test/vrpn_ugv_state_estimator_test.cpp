@@ -132,6 +132,55 @@ TEST(VrpnUgvStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsSta
     EXPECT_NEAR(output.state.yaw, held_state.yaw, 1.0e-12);
 }
 
+TEST(VrpnUgvStateRuntimeTest, InnovationGateReinitializesWhenConfigured) {
+    VrpnUgvStateEstimatorConfig config = testConfig();
+    config.innovation_position_gate_m = 0.1;
+    config.reinitialize_on_innovation_gate = true;
+
+    VrpnUgvStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnUgvStateEstimatorInput input;
+    input.imu = makeImu(1.0, 0.0, Eigen::Vector2d::Zero());
+    input.vrpn_pose = makePose(1.0, Eigen::Vector2d::Zero(), 0.0);
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+
+    input.vrpn_pose = makePose(1.02, Eigen::Vector2d(1.0, 0.0), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.02), input).ok());
+    runtime.processVrpnInput();
+
+    const auto output = runtime.refreshOutputSnapshot();
+    EXPECT_TRUE(output.last_pose_accepted);
+    EXPECT_NEAR(output.state.position.x(), 1.0, 1.0e-9);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kNone);
+}
+
+TEST(VrpnUgvStateRuntimeTest, DelayedLioPoseWithinWindowIsFused) {
+    VrpnUgvStateEstimatorConfig config = testConfig();
+    config.max_pose_delay_s = 0.20;
+
+    VrpnUgvStateEstimatorRuntime runtime;
+    runtime.setConfig(config);
+
+    VrpnUgvStateEstimatorInput input;
+    input.imu = makeImu(1.0, 0.0, Eigen::Vector2d::Zero());
+    input.vrpn_pose = makePose(1.0, Eigen::Vector2d::Zero(), 0.0);
+    runtime.estimator().initializeFromPose(input.vrpn_pose, &input.imu);
+    runtime.estimator().propagateInertial(makeImu(1.12, 0.0, Eigen::Vector2d::Zero()));
+
+    input.vrpn_pose = makePose(1.05, Eigen::Vector2d(0.02, 0.0), 0.0);
+    ASSERT_TRUE(
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.05), input).ok());
+    runtime.processVrpnInput();
+
+    const auto output = runtime.refreshOutputSnapshot();
+    EXPECT_TRUE(output.last_pose_accepted);
+    EXPECT_EQ(output.last_pose_reject_reason, xgc2_math::PoseFusionRejectReason::kNone);
+    EXPECT_EQ(output.flags & kPoseTimeAlignmentRejected, 0u);
+    EXPECT_NEAR(output.state.position.x(), 0.02, 1.0e-3);
+}
+
 TEST(VrpnUgvStateRuntimeTest, VrpnFaultFlagsAndFilteredPoseOutputRecover) {
     VrpnUgvStateEstimatorConfig config = testConfig();
     config.innovation_position_gate_m = 0.1;

@@ -51,13 +51,19 @@ void updateSampleTiming(Sample& sample, double stamp_sec) {
 }  // namespace
 
 PlanarStateInputProducer::PlanarStateInputProducer(ros::NodeHandle& nh, std::string imu_topic,
-                                                   std::string vrpn_pose_topic, uint32_t queue_size,
+                                                   std::string vrpn_pose_topic,
+                                                   std::string pose_transport, uint32_t queue_size,
                                                    EventSink event_sink)
     : event_sink_(std::move(event_sink)) {
     imu_sub_ = nh.subscribe(std::move(imu_topic), queue_size,
                             &PlanarStateInputProducer::imuCallback, this);
-    vrpn_pose_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
-                                  &PlanarStateInputProducer::vrpnPoseCallback, this);
+    if (pose_transport == "odometry") {
+        odometry_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
+                                     &PlanarStateInputProducer::odometryCallback, this);
+    } else {
+        vrpn_pose_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
+                                      &PlanarStateInputProducer::vrpnPoseCallback, this);
+    }
 }
 
 void PlanarStateInputProducer::imuCallback(const sensor_msgs::Imu::ConstPtr& msg) {
@@ -78,20 +84,31 @@ void PlanarStateInputProducer::imuCallback(const sensor_msgs::Imu::ConstPtr& msg
     postInputEvent(event_type::INPUT_IMU_UPDATED, "raw_imu", stamp_sec);
 }
 
+void PlanarStateInputProducer::applyPose(const std_msgs::Header& header,
+                                         const geometry_msgs::Pose& pose, const char* source) {
+    const double stamp_sec = ros1_utils::messageStampOrNow(header.stamp).toSec();
+    auto& sample = runtime_input_.vrpn_pose;
+    updateSampleTiming(sample, stamp_sec);
+    sample.pose.position = pointToPlanar(pose.position);
+    sample.pose.yaw = yawFromQuaternion(pose.orientation);
+    sample.stamp_sec = stamp_sec;
+    sample.received = true;
+    sample.valid = xgc2_math::isFinite(sample.pose);
+    postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, source, stamp_sec);
+}
+
 void PlanarStateInputProducer::vrpnPoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     if (!msg) {
         return;
     }
+    applyPose(msg->header, msg->pose, "vrpn_pose");
+}
 
-    const double stamp_sec = ros1_utils::messageStampOrNow(msg->header.stamp).toSec();
-    auto& sample = runtime_input_.vrpn_pose;
-    updateSampleTiming(sample, stamp_sec);
-    sample.pose.position = pointToPlanar(msg->pose.position);
-    sample.pose.yaw = yawFromQuaternion(msg->pose.orientation);
-    sample.stamp_sec = stamp_sec;
-    sample.received = true;
-    sample.valid = xgc2_math::isFinite(sample.pose);
-    postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, "vrpn_pose", stamp_sec);
+void PlanarStateInputProducer::odometryCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+    if (!msg) {
+        return;
+    }
+    applyPose(msg->header, msg->pose.pose, "lio_odom");
 }
 
 void PlanarStateInputProducer::postInputEvent(::state_machine::EventId event_id, const char* source,

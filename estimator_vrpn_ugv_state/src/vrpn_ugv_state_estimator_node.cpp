@@ -38,15 +38,17 @@ VrpnUgvStateEstimatorNode::VrpnUgvStateEstimatorNode(ros::NodeHandle& nh)
         return runtime_.postInputEvent(std::move(event), input);
     };
     input_producer_ = std::make_unique<PlanarStateInputProducer>(
-        nh_, imu_topic_, vrpn_pose_topic_, kRosQueueSize, std::move(post_input_event));
+        nh_, imu_topic_, vrpn_pose_topic_, pose_transport_, kRosQueueSize,
+        std::move(post_input_event));
 
     output_event_executor_.start();
 
     ROS_INFO(
-        "[VrpnUgvStateEstimatorNode] Initialized: imu=%s vrpn_pose=%s state=%s loop=%.1f "
-        "state_pub=%.1f",
-        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), state_topic_.c_str(), loop_rate_hz_,
-        config_.state_publish_rate_hz);
+        "[VrpnUgvStateEstimatorNode] Initialized: imu=%s pose=%s transport=%s source=%s "
+        "state=%s loop=%.1f state_pub=%.1f max_pose_delay=%.3f",
+        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), pose_transport_.c_str(),
+        pose_source_.c_str(), state_topic_.c_str(), loop_rate_hz_, config_.state_publish_rate_hz,
+        config_.max_pose_delay_s);
 }
 
 VrpnUgvStateEstimatorNode::~VrpnUgvStateEstimatorNode() {
@@ -80,6 +82,30 @@ void VrpnUgvStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "vrpn_pose_topic", vrpn_pose_topic_,
                                 "VRPN pose topic");
     ros1_utils::getParamWithLog(private_nh_, "state_topic", state_topic_, "State topic");
+    ros1_utils::getParamWithLog(private_nh_, "pose_source", pose_source_, "Pose source vrpn|lio");
+    ros1_utils::getParamWithLog(private_nh_, "pose_transport", pose_transport_,
+                                "Pose transport pose_stamped|odometry");
+    if (pose_source_ == "lio" && !private_nh_.hasParam("pose_transport")) {
+        pose_transport_ = "odometry";
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("vrpn_pose_topic")) {
+        vrpn_pose_topic_ = "/Odometry";
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("max_pose_delay_s")) {
+        config_.max_pose_delay_s = 0.30;
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("min_vrpn_rate_hz")) {
+        config_.min_vrpn_rate_hz = 8.0;
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("vrpn_timeout_s")) {
+        config_.vrpn_timeout_s = 0.30;
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("use_imu_horizontal_accel")) {
+        config_.use_imu_horizontal_accel = false;
+    }
+    if (pose_source_ == "lio" && !private_nh_.hasParam("reinitialize_on_innovation_gate")) {
+        config_.reinitialize_on_innovation_gate = true;
+    }
 
     ros1_utils::getParamWithLog(private_nh_, "loop_rate_hz", loop_rate_hz_, "Loop rate");
     ros1_utils::getParamWithLog(private_nh_, "state_publish_rate_hz", config_.state_publish_rate_hz,
@@ -104,6 +130,13 @@ void VrpnUgvStateEstimatorNode::loadParams() {
                                 "Minimum VRPN rate");
     ros1_utils::getParamWithLog(private_nh_, "max_time_jump_s", config_.max_time_jump_s,
                                 "Maximum time jump");
+    ros1_utils::getParamWithLog(private_nh_, "max_pose_delay_s", config_.max_pose_delay_s,
+                                "Maximum delayed pose age");
+    ros1_utils::getParamWithLog(private_nh_, "use_imu_horizontal_accel",
+                                config_.use_imu_horizontal_accel, "Use IMU horizontal accel");
+    ros1_utils::getParamWithLog(private_nh_, "reinitialize_on_innovation_gate",
+                                config_.reinitialize_on_innovation_gate,
+                                "Reinitialize on pose innovation gate");
 
     ros1_utils::getParamWithLog(private_nh_, "gyro_noise_std", config_.gyro_noise_std,
                                 "Gyroscope noise std");

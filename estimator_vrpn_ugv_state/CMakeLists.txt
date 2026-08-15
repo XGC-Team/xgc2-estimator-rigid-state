@@ -3,6 +3,7 @@ project(estimator_vrpn_ugv_state)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  nav_msgs
   rigid_state_estimator_msgs
   roscpp
   ros1_utils
@@ -17,7 +18,7 @@ find_package(xgc2_state_machine REQUIRED CONFIG)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_ugv_state_core estimator_vrpn_ugv_state_ros
-  CATKIN_DEPENDS geometry_msgs rigid_state_estimator_msgs roscpp ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs nav_msgs rigid_state_estimator_msgs roscpp ros1_utils sensor_msgs std_msgs
   DEPENDS EIGEN3
 )
 

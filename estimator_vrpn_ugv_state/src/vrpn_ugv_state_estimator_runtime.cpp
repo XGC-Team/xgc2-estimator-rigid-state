@@ -1,5 +1,6 @@
 #include "estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_runtime.h"
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -172,7 +173,11 @@ void VrpnUgvStateEstimatorRuntime::initializeIfReady() {
 }
 
 void VrpnUgvStateEstimatorRuntime::processImuInput() {
-    estimator_.propagateInertial(input_.imu);
+    xgc2_math::PlanarInertialSample imu = input_.imu;
+    if (!config_.use_imu_horizontal_accel) {
+        imu.linear_acceleration.setZero();
+    }
+    estimator_.propagateInertial(imu);
 }
 
 void VrpnUgvStateEstimatorRuntime::processVrpnInput() {
@@ -181,9 +186,28 @@ void VrpnUgvStateEstimatorRuntime::processVrpnInput() {
         initializeIfReady();
         return;
     }
-    const auto result = estimator_.updatePose(input_.vrpn_pose);
+    xgc2_math::PlanarPoseMeasurement pose = input_.vrpn_pose;
+    const double last_imu = estimator_.state().last_inertial_stamp_sec;
+    if (std::isfinite(last_imu) && pose.stamp_sec + 1.0e-5 < last_imu) {
+        const double delay = last_imu - pose.stamp_sec;
+        if (config_.max_pose_delay_s > 0.0 && delay <= config_.max_pose_delay_s) {
+            pose.stamp_sec = last_imu;
+        }
+    }
+    const auto result = estimator_.updatePose(pose);
     last_pose_accepted_ = result.accepted;
     last_pose_reject_reason_ = result.reject_reason;
+    if (!result.accepted && result.innovation_rejected && config_.reinitialize_on_innovation_gate) {
+        estimator_.initializeFromPose(pose, &input_.imu);
+        if (estimator_.initialized()) {
+            last_pose_accepted_ = true;
+            last_pose_reject_reason_ = xgc2_math::PoseFusionRejectReason::kNone;
+            clearPoseFusionFlags(estimator_flags_);
+            applyObservationStateFlags(estimator_.vrpnObservationState(), estimator_flags_);
+            applyFilterHealthFlags(estimator_.filterHealth(), estimator_flags_);
+            return;
+        }
+    }
     if (result.innovation_rejected) {
         estimator_flags_ |= kInnovationRejected;
     }
