@@ -1,19 +1,20 @@
 schema: xgc2.product.v1
 id: xgc2-estimator-rigid-state
 name: XGC2 Rigid State Estimators
-version: 1.1.6-12
+version: 1.1.6-13
 kind: ros1-apt
 summary: VRPN/IMU rigid state estimation packages for PX4 rotor UAVs and UGVs.
 ros:
-  distro: noetic
+  distro: melodic,noetic
   packages:
   - estimator_vrpn_px4_rotor_state
   - estimator_vrpn_ugv_state
 apt:
-  distribution: focal
+  distribution: bionic,focal
   install:
   - ros-noetic-xgc2-estimator-rigid-state
   packages:
+  - ros-melodic-xgc2-estimator-rigid-state
   - ros-noetic-xgc2-estimator-rigid-state
   depends:
   - libxgc2-math-dev (>= 0.5.6-6~focal)
@@ -52,4 +53,5 @@ release:
     xgc2-ros-msgs: rebuild
     xgc2-ros1-utils: rebuild
   apt_versions:
-    focal: 1.1.6-12
+    bionic: 1.1.6-13
+    focal: 1.1.6-13

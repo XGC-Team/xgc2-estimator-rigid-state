@@ -7,11 +7,11 @@ set +u
 source "/opt/ros/${ROS_DISTRO}/setup.bash"
 set -u
 
-dpkg -s ros-noetic-xgc2-estimator-rigid-state >/dev/null
-dpkg -s ros-noetic-xgc2-estimator-rigid-state-msgs >/dev/null
+dpkg -s "ros-${ROS_DISTRO}-xgc2-estimator-rigid-state" >/dev/null
+dpkg -s "ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs" >/dev/null
 dpkg -s libxgc2-math-dev >/dev/null
 dpkg -s libxgc2-state-machine-dev >/dev/null
-dpkg -s ros-noetic-xgc2-ros1-utils >/dev/null
+dpkg -s "ros-${ROS_DISTRO}-xgc2-ros1-utils" >/dev/null
 test -f /usr/include/xgc2_math/estimation/recursive_least_squares.hpp
 test -f /usr/include/xgc2_math/estimation/pose3_inertial_eskf.hpp
 test -f /usr/include/xgc2_math/estimation/pose2_inertial_eskf.hpp
@@ -24,8 +24,17 @@ test -f "/opt/ros/${ROS_DISTRO}/share/rigid_state_estimator_msgs/msg/RigidStateE
 test -f "/opt/ros/${ROS_DISTRO}/share/rigid_state_estimator_msgs/msg/PlanarStateEstimate.msg"
 test -f "/opt/ros/${ROS_DISTRO}/include/rigid_state_estimator_msgs/RigidStateEstimate.h"
 test -f "/opt/ros/${ROS_DISTRO}/include/rigid_state_estimator_msgs/PlanarStateEstimate.h"
-test -f "/opt/ros/${ROS_DISTRO}/lib/python3/dist-packages/rigid_state_estimator_msgs/msg/_RigidStateEstimate.py"
-test -f "/opt/ros/${ROS_DISTRO}/lib/python3/dist-packages/rigid_state_estimator_msgs/msg/_PlanarStateEstimate.py"
+python_msg=""
+for pyroot in \
+  "/opt/ros/${ROS_DISTRO}/lib/python3/dist-packages" \
+  "/opt/ros/${ROS_DISTRO}/lib/python2.7/dist-packages"; do
+  if [[ -f "${pyroot}/rigid_state_estimator_msgs/msg/_RigidStateEstimate.py" ]]; then
+    python_msg="${pyroot}"
+    break
+  fi
+done
+test -n "${python_msg}"
+test -f "${python_msg}/rigid_state_estimator_msgs/msg/_PlanarStateEstimate.py"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/config/vrpn_px4_rotor_state_estimator.yaml"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/launch/vrpn_px4_rotor_state_estimator.launch"
 test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_core.so"
@@ -41,7 +50,11 @@ rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^uint8 esti
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
 rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^uint8 estimator_state$'
 rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
-python3 - <<'PY'
+msg_python="python3"
+if [[ "${ROS_DISTRO}" == "melodic" ]]; then
+  msg_python="python2"
+fi
+"${msg_python}" - <<'PY'
 from rigid_state_estimator_msgs.msg import PlanarStateEstimate
 from rigid_state_estimator_msgs.msg import RigidStateEstimate
 

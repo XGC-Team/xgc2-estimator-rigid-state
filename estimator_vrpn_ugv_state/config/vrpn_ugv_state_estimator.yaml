@@ -1,5 +1,5 @@
-imu_topic: mavros/imu/data_raw
-vrpn_pose_topic: /vrpn_client_node/ugv1/pose
+imu_topic: /imu/data
+vrpn_pose_topic: /vrpn_client_node/pose_0/pose
 state_topic: alg/state_estimator/state
 
 loop_rate_hz: 1000.0
