@@ -78,12 +78,7 @@ docker run --rm \
       fi
     done
 
-    /workspace/estimator-rigid-state/.xgc2/scripts/setup_xgc2_apt_source.sh
-    apt-get install -y --no-install-recommends \
-      libxgc2-math-dev \
-      libxgc2-state-machine-dev \
-      ros-noetic-xgc2-estimator-rigid-state-msgs \
-      ros-noetic-xgc2-ros1-utils
+    /workspace/estimator-rigid-state/.xgc2/scripts/install_published_products.sh
 
     rm -rf /workspace/work/src /workspace/work/build /workspace/work/devel /workspace/work/install-root
     mkdir -p /workspace/work/src/estimator-rigid-state

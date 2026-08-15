@@ -120,14 +120,8 @@ jobs:
 
       - name: Install published XGC2 products
         run: |
-          export DEBIAN_FRONTEND=noninteractive
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          .xgc2/scripts/setup_xgc2_apt_source.sh
-          apt-get install -y --no-install-recommends \
-            libxgc2-math-dev \
-            libxgc2-state-machine-dev \
-            ros-noetic-xgc2-estimator-rigid-state-msgs \
-            ros-noetic-xgc2-ros1-utils
+          .xgc2/scripts/install_published_products.sh
 
       - name: Run C++ quality gate
         run: .xgc2/scripts/check_cpp_quality.sh
@@ -150,14 +144,8 @@ jobs:
       - name: Install published XGC2 products
         if: inputs.run_source_tests
         run: |
-          export DEBIAN_FRONTEND=noninteractive
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          .xgc2/scripts/setup_xgc2_apt_source.sh
-          apt-get install -y --no-install-recommends \
-            libxgc2-math-dev \
-            libxgc2-state-machine-dev \
-            ros-noetic-xgc2-estimator-rigid-state-msgs \
-            ros-noetic-xgc2-ros1-utils
+          .xgc2/scripts/install_published_products.sh
 
       - name: Check package metadata
         if: inputs.run_source_tests
@@ -167,31 +155,7 @@ jobs:
 
       - name: Build package and run launch compliance
         if: inputs.run_source_tests
-        run: |
-          set -euo pipefail
-          work_dir="${RUNNER_TEMP}/estimator-rigid-state-compliance"
-          install_root="${RUNNER_TEMP}/estimator-rigid-state-install-root"
-          rm -rf "$work_dir" "$install_root"
-          mkdir -p "$work_dir/src/estimator-rigid-state"
-          rsync -a --delete "$GITHUB_WORKSPACE/" "$work_dir/src/estimator-rigid-state/"
-
-          cd "$work_dir"
-          set +u
-          source /opt/ros/noetic/setup.bash
-          set -u
-          catkin_make run_tests_estimator_vrpn_px4_rotor_state run_tests_estimator_vrpn_ugv_state
-          catkin_test_results
-          DESTDIR="$install_root" catkin_make install \
-            -DCMAKE_INSTALL_PREFIX=/opt/ros/noetic \
-            -DCMAKE_BUILD_TYPE=Release
-          set +u
-          source devel/setup.bash
-          set -u
-          test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/noetic/share/rigid_state_estimator_msgs"
-          test "$(rospack find estimator_vrpn_px4_rotor_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state"
-          test "$(rospack find estimator_vrpn_ugv_state)" = "$work_dir/src/estimator-rigid-state/estimator_vrpn_ugv_state"
-          roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch >/tmp/xgc2-vrpn-px4-rotor-state-estimator-files.txt
-          roslaunch --files estimator_vrpn_ugv_state vrpn_ugv_state_estimator.launch >/tmp/xgc2-vrpn-ugv-state-estimator-files.txt
+        run: .xgc2/scripts/run_source_tests.sh
 
   build-debs:
     name: Build debs (${{ matrix.arch }})
