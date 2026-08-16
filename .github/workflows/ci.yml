@@ -19,28 +19,6 @@ jobs:
     container: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
     steps:
       - uses: actions/checkout@v4
-  package-compliance:
-    name: Package compliance and tests
-    runs-on: ubuntu-latest
-    container: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-  build-debs:
-    name: Build debs (${{ matrix.arch }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-
 
       - name: Install published XGC2 products
         run: |
@@ -50,6 +28,14 @@ jobs:
       - name: Run C++ quality gate
         run: .xgc2/scripts/check_cpp_quality.sh
 
+  package-compliance:
+    name: Package compliance and tests
+    runs-on: ubuntu-latest
+    container: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install published XGC2 products
         run: |
@@ -62,11 +48,41 @@ jobs:
       - name: Build package and run launch compliance
         run: .xgc2/scripts/run_source_tests.sh
 
+  build-debs:
+    name: Build debs (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: amd64-bionic-melodic
+            arch: amd64
+            distribution: bionic
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: arm64-bionic-melodic
+            arch: arm64
+            distribution: bionic
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: amd64-focal-noetic
+            arch: amd64
+            distribution: focal
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+          - name: arm64-focal-noetic
+            arch: arm64
+            distribution: focal
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Build and install-check deb package in Docker
         run: |
           .xgc2/scripts/build_debs_in_docker.sh \
-            --work-dir "$RUNNER_TEMP/estimator-rigid-state-${{ matrix.arch }}" \
+            --image "${{ matrix.image }}" \
+            --work-dir "$RUNNER_TEMP/estimator-rigid-state-${{ matrix.name }}" \
             --output-dir "$GITHUB_WORKSPACE/debs"
 
       - name: Create trusted build manifest
@@ -77,7 +93,7 @@ jobs:
             --output-dir .ci/build-manifests \
             --product xgc2-estimator-rigid-state \
             --product-version "$product_version" \
-            --distribution focal \
+            --distribution "${{ matrix.distribution }}" \
             --architecture "${{ matrix.arch }}" \
             --source-sha "$GITHUB_SHA" \
             --ci-run-id "$GITHUB_RUN_ID" \
@@ -87,7 +103,7 @@ jobs:
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xgc2-estimator-rigid-state-debs-${{ matrix.arch }}
+          name: xgc2-estimator-rigid-state-debs-${{ matrix.name }}
           path: |
             debs/*.deb
             .ci/build-manifests/*.json
