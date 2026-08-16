@@ -89,7 +89,8 @@ docker run --rm \
       "ros-${ROS_DISTRO}-rospack" \
       "ros-${ROS_DISTRO}-rospy" \
       "ros-${ROS_DISTRO}-sensor-msgs" \
-      "ros-${ROS_DISTRO}-std-msgs"
+      "ros-${ROS_DISTRO}-std-msgs" \
+      "ros-${ROS_DISTRO}-mavros-msgs"
     do
       if ! dpkg -s "${pkg}" >/dev/null 2>&1; then
         echo "image is missing ${pkg}" >&2

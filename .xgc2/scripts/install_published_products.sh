@@ -14,12 +14,12 @@ if [[ -d "${XGC2_LOCAL_DEB_DIR:-}" ]]; then
   fi
 fi
 "${SCRIPT_DIR}/setup_xgc2_apt_source.sh"
+if ! dpkg -s "ros-${ROS_DISTRO}-mavros-msgs" >/dev/null 2>&1; then
+  echo "image is missing ros-${ROS_DISTRO}-mavros-msgs; rebuild xgc2-images, do not apt it here" >&2
+  exit 1
+fi
 apt-get install -y --no-install-recommends \
   libxgc2-math-dev \
   libxgc2-state-machine-dev \
   "ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs" \
-  "ros-${ROS_DISTRO}-xgc2-ros1-utils" \
-  "ros-${ROS_DISTRO}-mavros-msgs" || true
-if [[ "${ROS_DISTRO}" == "melodic" ]] && ! dpkg -s "ros-${ROS_DISTRO}-mavros-msgs" >/dev/null 2>&1; then
-  echo "ros-${ROS_DISTRO}-mavros-msgs missing; PX4 estimator package will fail to configure" >&2
-fi
+  "ros-${ROS_DISTRO}-xgc2-ros1-utils"
