@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-estimator-rigid-state
 name: XGC2 Rigid State Estimators
-version: 1.1.6-17
+version: 1.1.6-18
 kind: ros1-apt
 summary: VRPN/IMU rigid state estimation packages for PX4 rotor UAVs and UGVs.
 ros:
@@ -12,7 +12,13 @@ ros:
 apt:
   distribution: bionic,focal
   install:
+  - ros-melodic-xgc2-estimator-rigid-state
   - ros-noetic-xgc2-estimator-rigid-state
+  package_distributions:
+    ros-melodic-xgc2-estimator-rigid-state:
+    - bionic
+    ros-noetic-xgc2-estimator-rigid-state:
+    - focal
   packages:
   - ros-melodic-xgc2-estimator-rigid-state
   - ros-noetic-xgc2-estimator-rigid-state
@@ -28,6 +34,8 @@ apt:
 usage:
   install: 'sudo apt update
 
+    sudo apt install ros-melodic-xgc2-estimator-rigid-state
+
     sudo apt install ros-noetic-xgc2-estimator-rigid-state
 
     '
@@ -38,6 +46,16 @@ usage:
     '
 ownership:
   paths:
+  - /opt/ros/melodic/share/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/include/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/lib/estimator_vrpn_px4_rotor_state
+  - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_core.so
+  - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_ros.so
+  - /opt/ros/melodic/share/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/include/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/lib/estimator_vrpn_ugv_state
+  - /opt/ros/melodic/lib/libestimator_vrpn_ugv_state_core.so
+  - /opt/ros/melodic/lib/libestimator_vrpn_ugv_state_ros.so
   - /opt/ros/noetic/share/estimator_vrpn_px4_rotor_state
   - /opt/ros/noetic/include/estimator_vrpn_px4_rotor_state
   - /opt/ros/noetic/lib/estimator_vrpn_px4_rotor_state
@@ -55,5 +73,5 @@ release:
     xgc2-ros-msgs: rebuild
     xgc2-ros1-utils: rebuild
   apt_versions:
-    bionic: 1.1.6-17
-    focal: 1.1.6-17
+    bionic: 1.1.6-18
+    focal: 1.1.6-18
