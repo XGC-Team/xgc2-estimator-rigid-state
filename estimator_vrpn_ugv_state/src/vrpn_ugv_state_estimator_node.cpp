@@ -38,19 +38,18 @@ VrpnUgvStateEstimatorNode::VrpnUgvStateEstimatorNode(ros::NodeHandle& nh)
                                    const VrpnUgvStateEstimatorInput& input) {
         return runtime_.postInputEvent(std::move(event), input);
     };
-    input_producer_ = std::make_unique<PlanarStateInputProducer>(
-        nh_, imu_topic_, vrpn_pose_topic_, pose_transport_, kRosQueueSize,
-        std::move(post_input_event));
+    input_producer_ = std::make_unique<PlanarStateInputProducer>(nh_, imu_topic_, vrpn_pose_topic_,
+                                                                 pose_transport_, kRosQueueSize,
+                                                                 std::move(post_input_event));
 
     output_event_executor_.start();
 
     ROS_INFO(
         "[VrpnUgvStateEstimatorNode] Initialized: imu=%s pose=%s transport=%s source=%s "
         "state=%s tf=%s->%s publish_tf=%d loop=%.1f state_pub=%.1f max_pose_delay=%.3f",
-        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), pose_transport_.c_str(),
-        pose_source_.c_str(), state_topic_.c_str(), world_frame_.c_str(),
-        estimator_frame_.c_str(), publish_tf_ ? 1 : 0, loop_rate_hz_,
-        config_.state_publish_rate_hz, config_.max_pose_delay_s);
+        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), pose_transport_.c_str(), pose_source_.c_str(),
+        state_topic_.c_str(), world_frame_.c_str(), estimator_frame_.c_str(), publish_tf_ ? 1 : 0,
+        loop_rate_hz_, config_.state_publish_rate_hz, config_.max_pose_delay_s);
 }
 
 VrpnUgvStateEstimatorNode::~VrpnUgvStateEstimatorNode() {
