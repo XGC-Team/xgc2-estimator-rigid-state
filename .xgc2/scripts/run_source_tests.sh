@@ -6,6 +6,12 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 work_dir="${RUNNER_TEMP:-/tmp}/estimator-rigid-state-compliance"
 install_root="${RUNNER_TEMP:-/tmp}/estimator-rigid-state-install-root"
 
+if grep -Eq '^[[:space:]]*continue-on-error:[[:space:]]*true' \
+  "${REPO_ROOT}/.github/workflows/ci.yml"; then
+  echo "CI quality/test jobs must fail closed" >&2
+  exit 1
+fi
+
 rm -rf "$work_dir" "$install_root"
 mkdir -p "$work_dir/src/estimator-rigid-state"
 rsync -a --delete "$REPO_ROOT/" "$work_dir/src/estimator-rigid-state/"
