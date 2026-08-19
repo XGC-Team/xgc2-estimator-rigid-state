@@ -55,6 +55,7 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double min_vrpn_rate_hz{20.0};
     double max_time_jump_s{0.25};
 
+    bool imu_noise_std_is_density{false};
     double accel_noise_std{0.35};
     double gyro_noise_std{0.03};
     double vrpn_position_noise_std{0.01};
@@ -66,6 +67,7 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double extrinsic_orientation_random_walk_std{1.0e-5};
     double innovation_position_gate_m{1.5};
     double innovation_orientation_gate_rad{0.8};
+    bool apply_pose_covariance_floor{true};
     double pose_position_kalman_gain{0.9};
     double pose_orientation_kalman_gain{0.8};
     int pose_update_iterations{3};

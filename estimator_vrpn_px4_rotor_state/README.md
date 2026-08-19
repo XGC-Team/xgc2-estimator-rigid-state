@@ -239,6 +239,7 @@ Default parameters:
 | `min_imu_rate_hz` | `25.0` | Minimum healthy IMU input rate. |
 | `min_vrpn_rate_hz` | `20.0` | Minimum healthy VRPN pose input rate. |
 | `max_time_jump_s` | `0.25` | Maximum allowed inter-sample gap before `FLAG_TIME_JUMP`. |
+| `imu_noise_std_is_density` | `false` | Treat accel/gyro noise stds as continuous-time densities. UGV config enables this; flight keeps legacy per-sample tuning. |
 | `accel_noise_std` | `0.35` | Accelerometer process noise standard deviation. |
 | `gyro_noise_std` | `0.03` | Gyroscope process noise standard deviation. |
 | `vrpn_position_noise_std` | `0.01` | VRPN position measurement noise standard deviation. |
@@ -250,6 +251,7 @@ Default parameters:
 | `extrinsic_orientation_random_walk_std` | `0.00001` | Extrinsic orientation random-walk standard deviation. |
 | `innovation_position_gate_m` | `1.5` | Consecutive raw VRPN jump reject (ID hop / flyer). Not filter lag. |
 | `innovation_orientation_gate_rad` | `0.8` | Consecutive raw VRPN orientation jump reject. |
+| `apply_pose_covariance_floor` | `true` | Restore pose covariance after an accepted update. Disable only with replay evidence. |
 | `pose_position_kalman_gain` | `0.9` | After a trusted pose, keep \(K_p \approx 0.9\). Accepted VRPN always fused. |
 | `pose_orientation_kalman_gain` | `0.8` | Same for orientation. |
 | `pose_update_iterations` | `3` | IESKF pose updates (relinearize \(H\)). `1` is a single ESKF step. |

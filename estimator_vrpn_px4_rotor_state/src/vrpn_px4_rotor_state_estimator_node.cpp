@@ -132,6 +132,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "max_time_jump_s", config_.max_time_jump_s,
                                 "Maximum time jump");
 
+    ros1_utils::getParamWithLog(private_nh_, "imu_noise_std_is_density",
+                                config_.imu_noise_std_is_density, "IMU noise std is density");
     ros1_utils::getParamWithLog(private_nh_, "accel_noise_std", config_.accel_noise_std,
                                 "Accelerometer noise std");
     ros1_utils::getParamWithLog(private_nh_, "gyro_noise_std", config_.gyro_noise_std,
@@ -158,6 +160,8 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
     ros1_utils::getParamWithLog(private_nh_, "innovation_orientation_gate_rad",
                                 config_.innovation_orientation_gate_rad,
                                 "Consecutive VRPN jump reject (rad)");
+    ros1_utils::getParamWithLog(private_nh_, "apply_pose_covariance_floor",
+                                config_.apply_pose_covariance_floor, "Apply pose covariance floor");
     ros1_utils::getParamWithLog(private_nh_, "pose_position_kalman_gain",
                                 config_.pose_position_kalman_gain,
                                 "Trusted VRPN position Kalman gain");

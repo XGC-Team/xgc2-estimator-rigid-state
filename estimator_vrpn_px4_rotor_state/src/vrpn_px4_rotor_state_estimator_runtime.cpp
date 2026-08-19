@@ -84,6 +84,7 @@ xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     result.measurement_frame_to_world = config.field_to_world;
     result.body_to_marker = config.imu_to_vrpn_marker;
     result.estimate_extrinsic = config.estimate_extrinsic;
+    result.imu_noise_std_is_density = config.imu_noise_std_is_density;
     result.accel_noise_std = config.accel_noise_std;
     result.gyro_noise_std = config.gyro_noise_std;
     result.pose_position_noise_std = config.vrpn_position_noise_std;
@@ -95,6 +96,7 @@ xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     result.extrinsic_orientation_random_walk_std = config.extrinsic_orientation_random_walk_std;
     result.innovation_position_gate_m = config.innovation_position_gate_m;
     result.innovation_orientation_gate_rad = config.innovation_orientation_gate_rad;
+    result.apply_pose_covariance_floor = config.apply_pose_covariance_floor;
     result.pose_position_kalman_gain = config.pose_position_kalman_gain;
     result.pose_orientation_kalman_gain = config.pose_orientation_kalman_gain;
     result.pose_update_iterations = config.pose_update_iterations;
