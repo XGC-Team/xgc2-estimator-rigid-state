@@ -115,9 +115,11 @@ TEST(RigidStateRuntimeTest, OutOfOrderVrpnPoseSetsTimeAlignmentFlagAndHoldsState
         makeImu(1.02, Eigen::Vector3d::Zero(), Eigen::Vector3d(1.0, 0.0, 9.8066)));
     const auto held_state = runtime.estimator().state();
 
-    input.vrpn_pose = makePose(1.01, Eigen::Vector3d(0.01, 0.0, 0.0));
+    // 200 ms before the current IMU clock is outside pose_max_late_s=0.12.
+    // A 10 ms-late pose must rewind and fuse; that is not a time-alignment reject.
+    input.vrpn_pose = makePose(0.82, Eigen::Vector3d(0.01, 0.0, 0.0));
     ASSERT_TRUE(
-        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 1.01), input).ok());
+        runtime.postInputEvent(inputEvent(event_type::INPUT_VRPN_POSE_UPDATED, 0.82), input).ok());
 
     const auto output = runtime.refreshOutputSnapshot();
     EXPECT_FALSE(output.last_pose_accepted);

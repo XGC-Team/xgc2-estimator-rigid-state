@@ -38,24 +38,20 @@ enum class HealthCondition : uint8_t {
 };
 
 struct VrpnPx4RotorStateEstimatorConfig {
+    xgc2_math::Pose3 field_to_world{};
+    xgc2_math::Pose3 imu_to_vrpn_marker{};
+    xgc2_math::ObservationHealthConfig vrpn_health{};
+
     double loop_rate_hz{1000.0};
     double state_publish_rate_hz{100.0};
     double vision_publish_rate_hz{30.0};
-
     double gravity_mps2{9.8066};
-    xgc2_math::Pose3 field_to_world{};
-    xgc2_math::Pose3 imu_to_vrpn_marker{};
-    bool extrinsic_verified{false};
-    bool estimate_extrinsic{false};
-
     double imu_timeout_s{0.05};
     double vrpn_timeout_s{0.12};
     double coasting_timeout_s{0.5};
     double min_imu_rate_hz{25.0};
     double min_vrpn_rate_hz{20.0};
     double max_time_jump_s{0.25};
-
-    bool imu_noise_std_is_density{false};
     double accel_noise_std{0.35};
     double gyro_noise_std{0.03};
     double vrpn_position_noise_std{0.01};
@@ -67,10 +63,8 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double extrinsic_orientation_random_walk_std{1.0e-5};
     double innovation_position_gate_m{1.5};
     double innovation_orientation_gate_rad{0.8};
-    bool apply_pose_covariance_floor{true};
     double pose_position_kalman_gain{0.9};
     double pose_orientation_kalman_gain{0.8};
-    int pose_update_iterations{3};
     double pose_update_convergence{1.0e-5};
     double velocity_innovation_gate_mps{3.0};
     double pose_nis_gate{22.5};
@@ -81,11 +75,15 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double initial_orientation_variance{0.01};
     double initial_gyro_bias_variance{0.01};
     double initial_accel_bias_variance{0.1};
-    std::size_t inertial_buffer_capacity{128};
     double pose_max_late_s{0.12};
     double pose_max_early_s{0.12};
     double pose_observation_delay_s{0.0};
-    xgc2_math::ObservationHealthConfig vrpn_health{};
+    std::size_t inertial_buffer_capacity{128};
+    int pose_update_iterations{3};
+    bool extrinsic_verified{false};
+    bool estimate_extrinsic{false};
+    bool imu_noise_std_is_density{false};
+    bool apply_pose_covariance_floor{true};
 };
 
 struct VrpnPx4RotorStateEstimatorInput {
