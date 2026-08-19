@@ -43,6 +43,9 @@ pose_nis_gate: 22.5
 covariance_high_threshold: 100.0
 max_propagation_dt_s: 0.01
 inertial_buffer_capacity: 128
+pose_max_late_s: 0.12
+pose_max_early_s: 0.12
+pose_observation_delay_s: 0.0
 initial_position_variance: 0.01
 initial_velocity_variance: 0.1
 initial_orientation_variance: 0.01

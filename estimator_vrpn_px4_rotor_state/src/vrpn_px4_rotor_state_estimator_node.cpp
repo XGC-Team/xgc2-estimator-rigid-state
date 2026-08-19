@@ -165,6 +165,12 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
                                 config_.covariance_high_threshold, "Covariance high threshold");
     ros1_utils::getParamWithLog(private_nh_, "max_propagation_dt_s", config_.max_propagation_dt_s,
                                 "Max propagation dt");
+    ros1_utils::getParamWithLog(private_nh_, "pose_max_late_s", config_.pose_max_late_s,
+                                "Pose max late versus IMU");
+    ros1_utils::getParamWithLog(private_nh_, "pose_max_early_s", config_.pose_max_early_s,
+                                "Pose max early versus IMU");
+    ros1_utils::getParamWithLog(private_nh_, "pose_observation_delay_s",
+                                config_.pose_observation_delay_s, "Pose observation delay prior");
     int inertial_buffer_capacity = static_cast<int>(config_.inertial_buffer_capacity);
     ros1_utils::getParamWithLog(private_nh_, "inertial_buffer_capacity", inertial_buffer_capacity,
                                 "Inertial history capacity");

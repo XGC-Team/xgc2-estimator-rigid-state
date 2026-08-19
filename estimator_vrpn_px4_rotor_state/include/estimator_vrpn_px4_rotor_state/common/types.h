@@ -76,6 +76,9 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double initial_gyro_bias_variance{0.01};
     double initial_accel_bias_variance{0.1};
     std::size_t inertial_buffer_capacity{128};
+    double pose_max_late_s{0.12};
+    double pose_max_early_s{0.12};
+    double pose_observation_delay_s{0.0};
     xgc2_math::ObservationHealthConfig vrpn_health{};
 };
 

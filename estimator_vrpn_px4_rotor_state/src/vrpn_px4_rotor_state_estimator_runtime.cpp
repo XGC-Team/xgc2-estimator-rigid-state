@@ -105,6 +105,9 @@ xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     result.initial_gyro_bias_variance = config.initial_gyro_bias_variance;
     result.initial_accel_bias_variance = config.initial_accel_bias_variance;
     result.inertial_buffer_capacity = config.inertial_buffer_capacity;
+    result.pose_max_late_s = config.pose_max_late_s;
+    result.pose_max_early_s = config.pose_max_early_s;
+    result.pose_observation_delay_s = config.pose_observation_delay_s;
     result.vrpn_health = config.vrpn_health;
     return result;
 }
