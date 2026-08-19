@@ -95,6 +95,10 @@ xgc2_math::Pose3InertialEskfConfig observerConfigFromRuntimeConfig(
     result.extrinsic_orientation_random_walk_std = config.extrinsic_orientation_random_walk_std;
     result.innovation_position_gate_m = config.innovation_position_gate_m;
     result.innovation_orientation_gate_rad = config.innovation_orientation_gate_rad;
+    result.pose_position_kalman_gain = config.pose_position_kalman_gain;
+    result.pose_orientation_kalman_gain = config.pose_orientation_kalman_gain;
+    result.pose_update_iterations = config.pose_update_iterations;
+    result.pose_update_convergence = config.pose_update_convergence;
     result.velocity_innovation_gate_mps = config.velocity_innovation_gate_mps;
     result.pose_nis_gate = config.pose_nis_gate;
     result.covariance_high_threshold = config.covariance_high_threshold;

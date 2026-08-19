@@ -66,6 +66,10 @@ struct VrpnPx4RotorStateEstimatorConfig {
     double extrinsic_orientation_random_walk_std{1.0e-5};
     double innovation_position_gate_m{1.5};
     double innovation_orientation_gate_rad{0.8};
+    double pose_position_kalman_gain{0.9};
+    double pose_orientation_kalman_gain{0.8};
+    int pose_update_iterations{3};
+    double pose_update_convergence{1.0e-5};
     double velocity_innovation_gate_mps{3.0};
     double pose_nis_gate{22.5};
     double covariance_high_threshold{100.0};

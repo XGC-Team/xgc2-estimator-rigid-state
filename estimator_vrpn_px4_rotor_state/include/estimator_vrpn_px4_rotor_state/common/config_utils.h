@@ -19,6 +19,20 @@ inline double nonNegativeOr(double value, double fallback) {
     return std::isfinite(value) && value >= 0.0 ? value : fallback;
 }
 
+inline double clampUnit(double value, double fallback) {
+    if (!std::isfinite(value) || value <= 0.0 || value >= 1.0) {
+        return fallback;
+    }
+    return value;
+}
+
+inline int poseIterationsOr(int value, int fallback) {
+    if (value < 1) {
+        return fallback;
+    }
+    return std::min(value, 8);
+}
+
 inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.loop_rate_hz = std::min(positiveOr(config.loop_rate_hz, 1000.0), 2000.0);
     config.state_publish_rate_hz =
@@ -52,6 +66,10 @@ inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.innovation_position_gate_m = positiveOr(config.innovation_position_gate_m, 1.5);
     config.innovation_orientation_gate_rad =
         positiveOr(config.innovation_orientation_gate_rad, 0.8);
+    config.pose_position_kalman_gain = clampUnit(config.pose_position_kalman_gain, 0.9);
+    config.pose_orientation_kalman_gain = clampUnit(config.pose_orientation_kalman_gain, 0.8);
+    config.pose_update_iterations = poseIterationsOr(config.pose_update_iterations, 3);
+    config.pose_update_convergence = positiveOr(config.pose_update_convergence, 1.0e-5);
     config.velocity_innovation_gate_mps = positiveOr(config.velocity_innovation_gate_mps, 3.0);
     config.pose_nis_gate = positiveOr(config.pose_nis_gate, 22.5);
     config.covariance_high_threshold = positiveOr(config.covariance_high_threshold, 100.0);

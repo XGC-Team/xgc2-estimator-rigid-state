@@ -153,10 +153,21 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
                                 config_.extrinsic_orientation_random_walk_std,
                                 "Extrinsic orientation random walk std");
     ros1_utils::getParamWithLog(private_nh_, "innovation_position_gate_m",
-                                config_.innovation_position_gate_m, "Position innovation gate");
+                                config_.innovation_position_gate_m,
+                                "Consecutive VRPN jump reject (m)");
     ros1_utils::getParamWithLog(private_nh_, "innovation_orientation_gate_rad",
                                 config_.innovation_orientation_gate_rad,
-                                "Orientation innovation gate");
+                                "Consecutive VRPN jump reject (rad)");
+    ros1_utils::getParamWithLog(private_nh_, "pose_position_kalman_gain",
+                                config_.pose_position_kalman_gain,
+                                "Trusted VRPN position Kalman gain");
+    ros1_utils::getParamWithLog(private_nh_, "pose_orientation_kalman_gain",
+                                config_.pose_orientation_kalman_gain,
+                                "Trusted VRPN orientation Kalman gain");
+    ros1_utils::getParamWithLog(private_nh_, "pose_update_iterations",
+                                config_.pose_update_iterations, "IESKF pose update iterations");
+    ros1_utils::getParamWithLog(private_nh_, "pose_update_convergence",
+                                config_.pose_update_convergence, "IESKF pose update convergence");
     ros1_utils::getParamWithLog(private_nh_, "velocity_innovation_gate_mps",
                                 config_.velocity_innovation_gate_mps, "Velocity innovation gate");
     ros1_utils::getParamWithLog(private_nh_, "pose_nis_gate", config_.pose_nis_gate,

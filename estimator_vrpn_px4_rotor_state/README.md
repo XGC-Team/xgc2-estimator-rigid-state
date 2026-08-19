@@ -248,8 +248,12 @@ Default parameters:
 | `accel_bias_random_walk_std` | `0.001` | Accelerometer bias random-walk standard deviation. |
 | `extrinsic_position_random_walk_std` | `0.00001` | Extrinsic translation random-walk standard deviation. |
 | `extrinsic_orientation_random_walk_std` | `0.00001` | Extrinsic orientation random-walk standard deviation. |
-| `innovation_position_gate_m` | `1.5` | Position innovation rejection gate. |
-| `innovation_orientation_gate_rad` | `0.8` | Orientation innovation rejection gate. |
+| `innovation_position_gate_m` | `1.5` | Consecutive raw VRPN jump reject (ID hop / flyer). Not filter lag. |
+| `innovation_orientation_gate_rad` | `0.8` | Consecutive raw VRPN orientation jump reject. |
+| `pose_position_kalman_gain` | `0.9` | After a trusted pose, keep \(K_p \approx 0.9\). Accepted VRPN always fused. |
+| `pose_orientation_kalman_gain` | `0.8` | Same for orientation. |
+| `pose_update_iterations` | `3` | IESKF pose updates (relinearize \(H\)). `1` is a single ESKF step. |
+| `pose_update_convergence` | `1e-5` | Stop IESKF early when \(\|\delta p,\delta\theta\|\) is below this. |
 | `velocity_innovation_gate_mps` | `3.0` | Velocity innovation rejection gate. |
 | `pose_nis_gate` | `22.5` | Pose normalized innovation squared rejection gate. |
 | `covariance_high_threshold` | `100.0` | Covariance trace threshold for `FLAG_COVARIANCE_HIGH`. |
