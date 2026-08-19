@@ -42,6 +42,8 @@ class VrpnPx4RotorStateEstimatorNode {
     std::string imu_topic_{"mavros/imu/data_raw"};
     std::string vrpn_pose_topic_{"/vrpn_client_node/uav1/pose"};
     std::string vrpn_twist_topic_{"/vrpn_client_node/uav1/twist"};
+    std::string pose_transport_{"pose"};
+    std::string pose_source_{"vrpn"};
     std::string state_topic_{"alg/state_estimator/state"};
     std::string vision_pose_topic_{"mavros/vision_pose/pose"};
     double loop_rate_hz_{1000.0};

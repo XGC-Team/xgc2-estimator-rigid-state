@@ -20,7 +20,7 @@ cd "$work_dir"
 set +u
 source /opt/ros/noetic/setup.bash
 set -u
-catkin_make run_tests_estimator_vrpn_px4_rotor_state run_tests_estimator_vrpn_ugv_state
+catkin_make run_tests_estimator_vrpn_px4_rotor_state
 catkin_test_results
 DESTDIR="$install_root" catkin_make install \
   -DCMAKE_INSTALL_PREFIX=/opt/ros/noetic \

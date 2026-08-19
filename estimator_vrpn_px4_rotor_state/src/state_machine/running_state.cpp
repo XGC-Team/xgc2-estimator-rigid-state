@@ -47,7 +47,8 @@ void RunningState::emitOutputIfDue(::state_machine::StateContext& ctx) {
         event.category = ::state_machine::EventCategory::kOutput;
         ctx.emitOutput(std::move(event));
     }
-    if (vision_publish_gate_.due(runtime_.currentTime(),
+    if (runtime_.config().vision_publish_rate_hz > 0.0 &&
+        vision_publish_gate_.due(runtime_.currentTime(),
                                  1.0 / runtime_.config().vision_publish_rate_hz)) {
         ::state_machine::Event event(output_event_type::PUBLISH_VISION_POSE,
                                      ::state_machine::EventTimestamp{runtime_.currentTime()});

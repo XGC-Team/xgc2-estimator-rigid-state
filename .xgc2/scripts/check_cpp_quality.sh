@@ -75,14 +75,11 @@ TIDY_SOURCES=(
   "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_main.cpp"
   "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_node.cpp"
   "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/src/vrpn_px4_rotor_state_estimator_runtime.cpp"
-  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_main.cpp"
-  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_node.cpp"
-  "${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_ugv_state/src/vrpn_ugv_state_estimator_runtime.cpp"
 )
 
 clang-tidy \
   -p "${WORK_DIR}/build" \
-  -header-filter="^${WORK_DIR}/src/estimator-rigid-state/(estimator_vrpn_px4_rotor_state|estimator_vrpn_ugv_state)/(include|src|test)/" \
+  -header-filter="^${WORK_DIR}/src/estimator-rigid-state/estimator_vrpn_px4_rotor_state/(include|src|test)/" \
   -quiet \
   "${TIDY_SOURCES[@]}"
 

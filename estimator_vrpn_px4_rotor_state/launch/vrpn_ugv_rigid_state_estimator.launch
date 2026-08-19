@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ns" default="ugv1"/>
+  <arg name="config_file" default="$(find estimator_vrpn_px4_rotor_state)/config/vrpn_ugv_rigid_state_estimator.yaml"/>
+  <arg name="pose_source" default="vrpn"/>
+  <arg name="imu_topic" default=""/>
+  <arg name="pose_topic" default=""/>
+  <arg name="pose_transport" default=""/>
+
+  <group ns="$(arg ns)">
+    <node pkg="estimator_vrpn_px4_rotor_state"
+          type="vrpn_px4_rotor_state_estimator_node"
+          name="vrpn_ugv_state_estimator"
+          output="screen"
+          respawn="false"
+          clear_params="true">
+      <rosparam command="load" file="$(arg config_file)"/>
+      <param name="pose_source" value="$(arg pose_source)"/>
+      <param name="vision_publish_rate_hz" value="0.0"/>
+      <param if="$(eval arg('imu_topic') != '')" name="imu_topic" value="$(arg imu_topic)"/>
+      <param if="$(eval arg('pose_topic') != '')" name="vrpn_pose_topic" value="$(arg pose_topic)"/>
+      <param if="$(eval arg('pose_transport') != '')" name="pose_transport" value="$(arg pose_transport)"/>
+      <param if="$(eval arg('pose_source') == 'lio')" name="pose_transport" value="odometry"/>
+      <param if="$(eval arg('pose_source') == 'lio' and arg('pose_topic') == '')" name="vrpn_pose_topic" value="/Odometry"/>
+      <param if="$(eval arg('pose_source') == 'lio')" name="min_vrpn_rate_hz" value="8.0"/>
+      <param if="$(eval arg('pose_source') == 'lio')" name="vrpn_timeout_s" value="0.30"/>
+    </node>
+  </group>
+</launch>

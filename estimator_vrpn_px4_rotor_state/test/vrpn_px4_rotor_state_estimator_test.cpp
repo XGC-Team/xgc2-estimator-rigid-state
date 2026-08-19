@@ -4,6 +4,7 @@
 #include <limits>
 #include <xgc2_math/geometry/se3.hpp>
 
+#include "estimator_vrpn_px4_rotor_state/common/config_utils.h"
 #include "estimator_vrpn_px4_rotor_state/common/health_checks.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
@@ -243,6 +244,14 @@ TEST(RigidStateHealthTest, DuplicateTimestampCanRemainRunningWhenSamplesAreFresh
     EXPECT_EQ(health.flags & kCoasting, 0u);
     EXPECT_TRUE(health.imu_ready);
     EXPECT_TRUE(health.vrpn_ready);
+}
+
+TEST(RigidStateConfigTest, ZeroVisionPublishRateStaysDisabled) {
+    VrpnPx4RotorStateEstimatorConfig config = testConfig();
+    config.loop_rate_hz = 1000.0;
+    config.vision_publish_rate_hz = 0.0;
+    config_utils::normalizeConfig(config);
+    EXPECT_DOUBLE_EQ(config.vision_publish_rate_hz, 0.0);
 }
 
 }  // namespace estimator_vrpn_px4_rotor_state

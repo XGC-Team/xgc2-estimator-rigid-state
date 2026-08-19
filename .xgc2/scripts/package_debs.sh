@@ -14,8 +14,6 @@ ROS_PACKAGES=(
 ROS_LIBRARIES=(
   libestimator_vrpn_px4_rotor_state_core.so
   libestimator_vrpn_px4_rotor_state_ros.so
-  libestimator_vrpn_ugv_state_core.so
-  libestimator_vrpn_ugv_state_ros.so
 )
 
 product_version() {
@@ -102,7 +100,7 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-3), libxgc2-math-dev (>= 0.5.6-6), libxgc2-state-machine-dev (>= 0.1.3-4), ros-${ROS_DISTRO}-xgc2-ros1-utils (>= 1.1.1-3), ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-rospy
+Depends: ros-${ROS_DISTRO}-xgc2-estimator-rigid-state-msgs (>= 1.2.0-3), libxgc2-math-dev (>= 0.5.6-6), libxgc2-state-machine-dev (>= 0.1.3-4), ros-${ROS_DISTRO}-xgc2-ros1-utils (>= 1.1.1-3), ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-rospy
 Recommends: ros-${ROS_DISTRO}-mavros-msgs
 Description: XGC2 VRPN/IMU rigid state estimation packages for rotor UAVs and UGVs
 EOF
@@ -113,8 +111,7 @@ chmod 0644 "${pkg_root}/DEBIAN/control" "${pkg_root}/usr/share/doc/${PACKAGE}/RE
 
 for executable in \
   "${pkg_root}${PREFIX}/lib/estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node" \
-  "${pkg_root}${PREFIX}/lib/estimator_vrpn_px4_rotor_state/request_highres_imu_rate.py" \
-  "${pkg_root}${PREFIX}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"; do
+  "${pkg_root}${PREFIX}/lib/estimator_vrpn_px4_rotor_state/request_highres_imu_rate.py"; do
   if [[ ! -x "${executable}" ]]; then
     echo "packaged ROS node is not executable: ${executable}" >&2
     exit 1

@@ -50,13 +50,19 @@ void updateSampleTiming(Sample& sample, double stamp_sec) {
 
 RigidStateInputProducer::RigidStateInputProducer(ros::NodeHandle& nh, std::string imu_topic,
                                                  std::string vrpn_pose_topic,
-                                                 std::string vrpn_twist_topic, uint32_t queue_size,
+                                                 std::string vrpn_twist_topic,
+                                                 std::string pose_transport, uint32_t queue_size,
                                                  EventSink event_sink)
     : event_sink_(std::move(event_sink)) {
     imu_sub_ =
         nh.subscribe(std::move(imu_topic), queue_size, &RigidStateInputProducer::imuCallback, this);
-    vrpn_pose_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
-                                  &RigidStateInputProducer::vrpnPoseCallback, this);
+    if (pose_transport == "odometry") {
+        odometry_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
+                                     &RigidStateInputProducer::odometryCallback, this);
+    } else {
+        vrpn_pose_sub_ = nh.subscribe(std::move(vrpn_pose_topic), queue_size,
+                                      &RigidStateInputProducer::vrpnPoseCallback, this);
+    }
     if (!vrpn_twist_topic.empty()) {
         vrpn_twist_sub_ = nh.subscribe(std::move(vrpn_twist_topic), queue_size,
                                        &RigidStateInputProducer::vrpnTwistCallback, this);
@@ -80,21 +86,31 @@ void RigidStateInputProducer::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
     postInputEvent(event_type::INPUT_IMU_UPDATED, "raw_imu", stamp_sec);
 }
 
+void RigidStateInputProducer::applyPose(const std_msgs::Header& header,
+                                        const geometry_msgs::Pose& pose, const char* source) {
+    const double stamp_sec = ros1_utils::messageStampOrNow(header.stamp).toSec();
+    auto& sample = runtime_input_.vrpn_pose;
+    updateSampleTiming(sample, stamp_sec);
+    sample.pose.position = pointToEigen(pose.position);
+    sample.pose.orientation = toEigen(pose.orientation);
+    sample.stamp_sec = stamp_sec;
+    sample.received = true;
+    sample.valid = xgc2_math::isFinite(sample.pose.position) && isValidQuaternion(pose.orientation);
+    postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, source, stamp_sec);
+}
+
 void RigidStateInputProducer::vrpnPoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     if (!msg) {
         return;
     }
+    applyPose(msg->header, msg->pose, "vrpn_pose");
+}
 
-    const double stamp_sec = ros1_utils::messageStampOrNow(msg->header.stamp).toSec();
-    auto& sample = runtime_input_.vrpn_pose;
-    updateSampleTiming(sample, stamp_sec);
-    sample.pose.position = pointToEigen(msg->pose.position);
-    sample.pose.orientation = toEigen(msg->pose.orientation);
-    sample.stamp_sec = stamp_sec;
-    sample.received = true;
-    sample.valid =
-        xgc2_math::isFinite(sample.pose.position) && isValidQuaternion(msg->pose.orientation);
-    postInputEvent(event_type::INPUT_VRPN_POSE_UPDATED, "vrpn_pose", stamp_sec);
+void RigidStateInputProducer::odometryCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+    if (!msg) {
+        return;
+    }
+    applyPose(msg->header, msg->pose.pose, "lio_odom");
 }
 
 void RigidStateInputProducer::vrpnTwistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg) {

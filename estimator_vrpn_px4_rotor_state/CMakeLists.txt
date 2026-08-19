@@ -4,6 +4,7 @@ project(estimator_vrpn_px4_rotor_state)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   mavros_msgs
+  nav_msgs
   rigid_state_estimator_msgs
   roscpp
   rospy
@@ -19,7 +20,7 @@ find_package(xgc2_state_machine REQUIRED CONFIG)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES estimator_vrpn_px4_rotor_state_core estimator_vrpn_px4_rotor_state_ros
-  CATKIN_DEPENDS geometry_msgs mavros_msgs rigid_state_estimator_msgs roscpp rospy ros1_utils sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs mavros_msgs nav_msgs rigid_state_estimator_msgs roscpp rospy ros1_utils sensor_msgs std_msgs
   DEPENDS EIGEN3
 )
 

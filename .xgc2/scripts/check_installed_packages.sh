@@ -14,7 +14,6 @@ dpkg -s libxgc2-state-machine-dev >/dev/null
 dpkg -s "ros-${ROS_DISTRO}-xgc2-ros1-utils" >/dev/null
 test -f /usr/include/xgc2_math/estimation/recursive_least_squares.hpp
 test -f /usr/include/xgc2_math/estimation/pose3_inertial_eskf.hpp
-test -f /usr/include/xgc2_math/estimation/pose2_inertial_eskf.hpp
 test -f /usr/include/state_machine/state_machine.hpp
 test -f /usr/include/state_machine/runtime/event_dispatcher.hpp
 test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/${ROS_DISTRO}/share/rigid_state_estimator_msgs"
@@ -36,16 +35,18 @@ done
 test -n "${python_msg}"
 test -f "${python_msg}/rigid_state_estimator_msgs/msg/_PlanarStateEstimate.py"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/config/vrpn_px4_rotor_state_estimator.yaml"
+test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/config/vrpn_ugv_rigid_state_estimator.yaml"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/launch/vrpn_px4_rotor_state_estimator.launch"
+test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/launch/vrpn_ugv_rigid_state_estimator.launch"
 test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_core.so"
 test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_ros.so"
-test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state/config/vrpn_ugv_state_estimator.yaml"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state/launch/vrpn_ugv_state_estimator.launch"
-test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_core.so"
-test -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_ros.so"
+test ! -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state/config/vrpn_ugv_state_estimator.yaml"
+test ! -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_core.so"
+test ! -f "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_ros.so"
 test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_node"
 test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state/request_highres_imu_rate.py"
-test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"
+test ! -e "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^uint8 estimator_state$'
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
 rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^uint8 estimator_state$'
@@ -61,7 +62,9 @@ from rigid_state_estimator_msgs.msg import RigidStateEstimate
 msg = RigidStateEstimate()
 msg.estimator_state = RigidStateEstimate.STATE_RUNNING
 msg.flags = 0
-assert msg.estimator_state == RigidStateEstimate.STATE_RUNNING
+assert msg.estimator_state == 3
+assert RigidStateEstimate.STATE_RUNNING == 3
+assert PlanarStateEstimate.STATE_RUNNING == 2
 planar = PlanarStateEstimate()
 planar.estimator_state = PlanarStateEstimate.STATE_RUNNING
 assert planar.estimator_state == PlanarStateEstimate.STATE_RUNNING
@@ -80,9 +83,6 @@ while IFS= read -r file; do
   fi
 done < <(find "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state" \
   "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_core.so" \
-  "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_ros.so" \
-  "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_ugv_state" \
-  "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_core.so" \
-  "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_ugv_state_ros.so" -type f 2>/dev/null | sort -u)
+  "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_ros.so" -type f 2>/dev/null | sort -u)
 
 echo "Installed package check passed"

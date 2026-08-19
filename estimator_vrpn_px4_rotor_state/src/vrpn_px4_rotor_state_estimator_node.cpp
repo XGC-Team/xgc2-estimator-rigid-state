@@ -40,9 +40,9 @@ VrpnPx4RotorStateEstimatorNode::VrpnPx4RotorStateEstimatorNode(ros::NodeHandle& 
         return runtime_.postInputEvent(std::move(event), input);
     };
 
-    input_producer_ = std::make_unique<RigidStateInputProducer>(nh_, imu_topic_, vrpn_pose_topic_,
-                                                                vrpn_twist_topic_, kRosQueueSize,
-                                                                std::move(post_input_event));
+    input_producer_ = std::make_unique<RigidStateInputProducer>(
+        nh_, imu_topic_, vrpn_pose_topic_, vrpn_twist_topic_, pose_transport_, kRosQueueSize,
+        std::move(post_input_event));
 
     state_publish_timer_ =
         nh_.createTimer(ros::Duration(1.0 / config_.state_publish_rate_hz),
@@ -51,10 +51,10 @@ VrpnPx4RotorStateEstimatorNode::VrpnPx4RotorStateEstimatorNode(ros::NodeHandle& 
     output_event_executor_.start();
 
     ROS_INFO(
-        "[VrpnPx4RotorStateEstimatorNode] Initialized: imu=%s vrpn_pose=%s vrpn_twist=%s state=%s "
-        "vision_pose=%s loop=%.1f state_pub=%.1f vision_pub=%.1f",
-        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), vrpn_twist_topic_.c_str(),
-        state_topic_.c_str(), vision_pose_topic_.c_str(), loop_rate_hz_,
+        "[VrpnPx4RotorStateEstimatorNode] Initialized: imu=%s pose=%s transport=%s source=%s "
+        "twist=%s state=%s vision_pose=%s loop=%.1f state_pub=%.1f vision_pub=%.1f",
+        imu_topic_.c_str(), vrpn_pose_topic_.c_str(), pose_transport_.c_str(), pose_source_.c_str(),
+        vrpn_twist_topic_.c_str(), state_topic_.c_str(), vision_pose_topic_.c_str(), loop_rate_hz_,
         config_.state_publish_rate_hz, config_.vision_publish_rate_hz);
 }
 
@@ -90,6 +90,15 @@ void VrpnPx4RotorStateEstimatorNode::loadParams() {
                                 "VRPN pose topic");
     ros1_utils::getParamWithLog(private_nh_, "vrpn_twist_topic", vrpn_twist_topic_,
                                 "VRPN twist topic");
+    ros1_utils::getParamWithLog(private_nh_, "pose_transport", pose_transport_,
+                                "Pose transport pose|odometry");
+    ros1_utils::getParamWithLog(private_nh_, "pose_source", pose_source_, "Pose source vrpn|lio");
+    if (pose_source_ == "lio" && pose_transport_ != "odometry") {
+        pose_transport_ = "odometry";
+    }
+    if (pose_source_ == "lio" && vrpn_pose_topic_.find("vrpn_client_node") != std::string::npos) {
+        vrpn_pose_topic_ = "/Odometry";
+    }
     ros1_utils::getParamWithLog(private_nh_, "state_topic", state_topic_, "State topic");
     ros1_utils::getParamWithLog(private_nh_, "vision_pose_topic", vision_pose_topic_,
                                 "Vision pose topic");

@@ -23,8 +23,10 @@ inline void normalizeConfig(VrpnPx4RotorStateEstimatorConfig& config) {
     config.loop_rate_hz = std::min(positiveOr(config.loop_rate_hz, 1000.0), 2000.0);
     config.state_publish_rate_hz =
         std::min(positiveOr(config.state_publish_rate_hz, 100.0), config.loop_rate_hz);
-    config.vision_publish_rate_hz =
-        std::min(positiveOr(config.vision_publish_rate_hz, 30.0), config.loop_rate_hz);
+    config.vision_publish_rate_hz = nonNegativeOr(config.vision_publish_rate_hz, 30.0);
+    if (config.vision_publish_rate_hz > 0.0) {
+        config.vision_publish_rate_hz = std::min(config.vision_publish_rate_hz, config.loop_rate_hz);
+    }
 
     config.gravity_mps2 = positiveOr(config.gravity_mps2, 9.8066);
     config.imu_timeout_s = positiveOr(config.imu_timeout_s, 0.05);
