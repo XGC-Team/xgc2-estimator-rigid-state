@@ -1,4 +1,4 @@
-imu_topic: /imu/data
+imu_topic: /imu/data_raw
 vrpn_pose_topic: /vrpn_client_node/pose_0/pose
 # Empty: do not fuse VRPN twist. Client twist is pose dirty-diff, not a velocity sensor.
 vrpn_twist_topic: ""

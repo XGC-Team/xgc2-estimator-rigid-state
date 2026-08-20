@@ -2,7 +2,7 @@
 
 This package no longer runs a 2D EKF. It only launches the shared
 `Pose3InertialEskf` node from `estimator_vrpn_px4_rotor_state` with a UGV
-config (`/imu/data`, HI226 timeouts, no PX4 vision).
+config (`/imu/data_raw`, HI226 timeouts, no PX4 vision).
 
 UGV controllers subscribe to `RigidStateEstimate` and project to
 `x, y, yaw, speed, yaw_rate` at the control boundary. The UGV config does
