@@ -1,8 +1,8 @@
 # VRPN PX4 Rotor State Estimator
 
 ROS1 package for estimating full 3D rigid-body state for PX4/MAVROS
-multirotor controllers. The package fuses raw MAVROS IMU, VRPN/Gazebo pose,
-and optional VRPN/Gazebo twist, then publishes both the controller-facing state
+multirotor controllers. The package fuses raw MAVROS IMU and VRPN/Gazebo pose,
+then publishes both the controller-facing state
 estimate and a corrected vision pose for PX4 external-vision fusion.
 
 The nonlinear estimator is provided by `libxgc2-math-dev` through
@@ -180,10 +180,10 @@ Out-of-order pose measurements can be rejected by the estimator history and set
 updates drive the internal VRPN observation health states `Trusted`,
 `Suspected`, `Fault`, and `Recovery`.
 
-The optional VRPN twist input is converted from `geometry_msgs/TwistStamped` and
-fused as a velocity measurement. It is useful when the simulator or motion
-capture bridge provides a differentiated velocity that is less noisy or less
-lagged than velocity reconstructed by the inertial filter alone.
+The implementation retains an optional generic velocity-measurement input, but
+the UAV and Gazebo product configs leave it disabled. VRPN client twist is pose
+differencing rather than an independent velocity sensor; controller velocity
+therefore comes from IMU propagation plus pose updates.
 
 The corrected PX4 vision pose is published only when a corrected body pose is
 available and no blocking vision flags are set:
@@ -206,7 +206,6 @@ Default topics:
 | --- | --- | --- | --- |
 | Subscribe | `mavros/imu/data_raw` | `sensor_msgs/Imu` | angular velocity, linear acceleration |
 | Subscribe | `/vrpn_client_node/uav1/pose` | `geometry_msgs/PoseStamped` | position, orientation |
-| Subscribe | `/vrpn_client_node/uav1/twist` | `geometry_msgs/TwistStamped` | `twist.linear` |
 | Publish | `alg/state_estimator/state` | `rigid_state_estimator_msgs/RigidStateEstimate` | full controller state and diagnostics |
 | Publish | `mavros/vision_pose/pose` | `geometry_msgs/PoseStamped` | corrected body pose for PX4 vision input |
 
@@ -220,7 +219,7 @@ Default parameters:
 | --- | ---: | --- |
 | `imu_topic` | `mavros/imu/data_raw` | Raw MAVROS IMU input topic. |
 | `vrpn_pose_topic` | `/vrpn_client_node/uav1/pose` | VRPN or Gazebo pose input topic. |
-| `vrpn_twist_topic` | `/vrpn_client_node/uav1/twist` | Optional VRPN or Gazebo twist input topic. Empty disables the subscriber. |
+| `vrpn_twist_topic` | `""` | Optional generic velocity input. UAV product configs keep it disabled. |
 | `state_topic` | `alg/state_estimator/state` | Controller-facing state estimate output topic. |
 | `vision_pose_topic` | `mavros/vision_pose/pose` | PX4 vision pose output topic. |
 | `loop_rate_hz` | `1000.0` | Main runtime update loop rate. Clamped to at most 2000 Hz. |

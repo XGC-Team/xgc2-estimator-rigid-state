@@ -1,6 +1,7 @@
 imu_topic: mavros/imu/data_raw
 vrpn_pose_topic: /vrpn_client_node/uav1/pose
-vrpn_twist_topic: /vrpn_client_node/uav1/twist
+# Keep the estimator contract identical to flight; Gazebo truth stays diagnostic.
+vrpn_twist_topic: ""
 state_topic: alg/state_estimator/state
 vision_pose_topic: mavros/vision_pose/pose
 

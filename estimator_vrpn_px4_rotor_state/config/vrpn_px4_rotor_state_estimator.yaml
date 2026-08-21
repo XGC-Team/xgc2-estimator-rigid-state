@@ -1,6 +1,7 @@
 imu_topic: mavros/imu/data_raw
 vrpn_pose_topic: /vrpn_client_node/uav1/pose
-vrpn_twist_topic: /vrpn_client_node/uav1/twist
+# VRPN client twist is pose differencing, not a velocity sensor.
+vrpn_twist_topic: ""
 state_topic: alg/state_estimator/state
 vision_pose_topic: mavros/vision_pose/pose
 
