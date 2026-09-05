@@ -90,6 +90,7 @@ target_link_libraries(vrpn_px4_rotor_state_estimator_node
 if(CATKIN_ENABLE_TESTING)
   catkin_add_gtest(${PROJECT_NAME}_core_test
     test/vrpn_px4_rotor_state_estimator_test.cpp
+    test/rigid_state_input_timing_test.cpp
   )
   if(TARGET ${PROJECT_NAME}_core_test)
     target_compile_features(${PROJECT_NAME}_core_test PUBLIC cxx_std_17)
