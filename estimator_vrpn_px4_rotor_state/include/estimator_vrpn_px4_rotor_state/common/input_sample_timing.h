@@ -22,8 +22,8 @@ void updateSampleTiming(Sample& sample, double stamp_sec, double now_sec) {
     const bool finite_dt = std::isfinite(raw_dt_sec);
     const bool invalid_clock = !std::isfinite(now_sec) || !std::isfinite(stamp_sec) ||
                                stamp_sec > now_sec + kFutureTimestampToleranceSec;
-    sample.time_jump =
-        invalid_clock || (has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec));
+    sample.time_jump = invalid_clock ||
+                       (has_prev && (!finite_dt || raw_dt_sec < -kTimestampDuplicateToleranceSec));
     sample.last_dt_sec = has_prev && finite_dt ? std::max(0.0, raw_dt_sec) : 0.0;
     if (!has_prev || sample.time_jump) {
         sample.estimated_rate_hz = 0.0;
