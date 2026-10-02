@@ -8,6 +8,7 @@
 #include <xgc2_math/geometry/se3.hpp>
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
+#include "estimator_vrpn_px4_rotor_state/common/vision_pose_publication.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
 namespace estimator_vrpn_px4_rotor_state {
@@ -65,7 +66,6 @@ rigid_state_estimator_msgs::RigidStateEstimate makeStateMessage(
     const VrpnPx4RotorStateEstimatorOutput& output, const ros::Time& stamp);
 geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimatorOutput& output,
                                                  const ros::Time& stamp);
-bool canPublishVisionPose(const VrpnPx4RotorStateEstimatorOutput& output);
 
 }  // namespace
 
@@ -147,12 +147,6 @@ geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimato
     return msg;
 }
 
-bool canPublishVisionPose(const VrpnPx4RotorStateEstimatorOutput& output) {
-    constexpr uint32_t kVisionBlockingFlags = kVrpnMissing | kVrpnStale | kInvalidVrpn | kTimeJump |
-                                              kPoseTimeAlignmentRejected | kVrpnFault |
-                                              kFilterImuOnly;
-    return output.has_corrected_vision_pose && (output.flags & kVisionBlockingFlags) == 0u;
-}
 
 }  // namespace
 
