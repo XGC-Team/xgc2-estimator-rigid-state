@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 #include "xgc_rt.h"
-#include "xgc_schemas_v1.h"
+#include <xgc-robotics-interfaces/robotics_interfaces_v1.h>
+#include "estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
 #include "estimator_vrpn_px4_rotor_state/common/types.h"
 
 namespace rs = estimator_vrpn_px4_rotor_state;

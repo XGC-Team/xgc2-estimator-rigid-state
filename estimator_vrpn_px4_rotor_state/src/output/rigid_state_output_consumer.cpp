@@ -10,6 +10,7 @@
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
 #include "estimator_vrpn_px4_rotor_state/common/vision_pose_publication.h"
 #include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
+#include "estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
 
 namespace estimator_vrpn_px4_rotor_state {
 namespace {
