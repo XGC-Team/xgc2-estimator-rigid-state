@@ -110,6 +110,7 @@ docker run --rm \
     set -u
     DESTDIR=/workspace/work/install-root catkin_make install \
       -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
+      -DCMAKE_INSTALL_INCLUDEDIR=include -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_DATADIR=share \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
       -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"
@@ -117,6 +118,9 @@ docker run --rm \
     /workspace/estimator-rigid-state/.xgc2/scripts/package_debs.sh \
       --install-root /workspace/work/install-root \
       --output-dir /workspace/out
+
+    /workspace/estimator-rigid-state/.xgc2/scripts/check_wire_package_payload.sh \
+      /workspace/work/install-root /workspace/out
 
     if [[ "${INSTALL_CHECK}" == "true" ]]; then
       apt-get install -y /workspace/out/*.deb

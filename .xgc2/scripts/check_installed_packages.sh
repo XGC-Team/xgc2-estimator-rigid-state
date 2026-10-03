@@ -86,3 +86,14 @@ done < <(find "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state" \
   "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_ros.so" -type f 2>/dev/null | sort -u)
 
 echo "Installed package check passed"
+
+WIRE_PATHS=(
+  "/opt/ros/${ROS_DISTRO}/include/estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
+  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfig.cmake"
+  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfigVersion.cmake"
+  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireTargets.cmake"
+)
+for path in "${WIRE_PATHS[@]}"; do
+  test -f "${path}"
+  dpkg-query -S "${path}" | grep -Fxq "ros-${ROS_DISTRO}-xgc2-estimator-rigid-state: ${path}"
+done

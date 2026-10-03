@@ -53,6 +53,18 @@ fi
 ARCH="$(dpkg --print-architecture)"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 PREFIX_ROOT="${INSTALL_ROOT}${PREFIX}"
+WIRE_PATHS=(
+  "${PREFIX}/include/estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
+  "${PREFIX}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfig.cmake"
+  "${PREFIX}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfigVersion.cmake"
+  "${PREFIX}/share/cmake/RigidStateNativeWire/RigidStateNativeWireTargets.cmake"
+)
+for path in "${WIRE_PATHS[@]}"; do
+  [[ -f "${INSTALL_ROOT}${path}" ]] || {
+    echo "missing required installed owning DTO export: ${path}" >&2
+    exit 1
+  }
+done
 BUILD_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -86,6 +98,10 @@ mkdir -p "${pkg_root}"
 
 for ros_package in "${ROS_PACKAGES[@]}"; do
   copy_ros_package "${ros_package}" "${pkg_root}"
+done
+
+for path in "${WIRE_PATHS[@]}"; do
+  copy_path "${INSTALL_ROOT}${path}" "${pkg_root}"
 done
 
 for ros_library in "${ROS_LIBRARIES[@]}"; do
