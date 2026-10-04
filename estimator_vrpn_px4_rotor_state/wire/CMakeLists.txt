@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 project(RigidStateNativeWire VERSION 1.0.0 LANGUAGES NONE)
 include(CMakePackageConfigHelpers)
 set(CMAKE_INSTALL_INCLUDEDIR "include" CACHE PATH "Header installation directory")
@@ -18,8 +18,15 @@ install(EXPORT RigidStateNativeWireTargets NAMESPACE RigidStateNative::
 configure_package_config_file(RigidStateNativeWireConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/RigidStateNativeWireConfig.cmake
   INSTALL_DESTINATION ${wire_config_dir})
+# CMake 3.10's original SameMajorVersion helper skips architecture checks when
+# the producer pointer size is empty. Preserve that header-only contract even
+# when this LANGUAGES NONE exporter is added by a compiled parent project.
+set(_rigid_wire_pointer_size "${CMAKE_SIZEOF_VOID_P}")
+set(CMAKE_SIZEOF_VOID_P "")
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/RigidStateNativeWireConfigVersion.cmake
-  VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
+  VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+set(CMAKE_SIZEOF_VOID_P "${_rigid_wire_pointer_size}")
+unset(_rigid_wire_pointer_size)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RigidStateNativeWireConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/RigidStateNativeWireConfigVersion.cmake
   DESTINATION ${wire_config_dir})
