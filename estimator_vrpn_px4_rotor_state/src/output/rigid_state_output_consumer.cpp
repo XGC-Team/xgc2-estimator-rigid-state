@@ -9,8 +9,8 @@
 
 #include "estimator_vrpn_px4_rotor_state/common/event_types.h"
 #include "estimator_vrpn_px4_rotor_state/common/vision_pose_publication.h"
-#include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 #include "estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
+#include "estimator_vrpn_px4_rotor_state/vrpn_px4_rotor_state_estimator_runtime.h"
 
 namespace estimator_vrpn_px4_rotor_state {
 namespace {
@@ -147,7 +147,6 @@ geometry_msgs::PoseStamped makeVisionPoseMessage(const VrpnPx4RotorStateEstimato
     msg.pose.orientation = toQuaternion(output.corrected_vision_pose.orientation);
     return msg;
 }
-
 
 }  // namespace
 

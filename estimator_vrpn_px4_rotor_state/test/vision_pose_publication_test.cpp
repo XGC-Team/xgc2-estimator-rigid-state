@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include "estimator_vrpn_px4_rotor_state/common/vision_pose_publication.h"
+
+#include <gtest/gtest.h>
 namespace estimator_vrpn_px4_rotor_state {
 TEST(VisionPosePublication, RequiresCorrectedPoseAndRejectsEachOriginalBlockingFlag) {
     VrpnPx4RotorStateEstimatorOutput output{};
@@ -14,4 +15,4 @@ TEST(VisionPosePublication, RequiresCorrectedPoseAndRejectsEachOriginalBlockingF
     output.flags = kImuMissing;
     EXPECT_TRUE(canPublishVisionPose(output));
 }
-}
+}  // namespace estimator_vrpn_px4_rotor_state
