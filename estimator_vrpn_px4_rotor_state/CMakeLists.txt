@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 project(estimator_vrpn_px4_rotor_state VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
@@ -117,6 +117,8 @@ if(RIGID_STATE_BUILD_TESTING OR (RIGID_STATE_BUILD_ROS AND CATKIN_ENABLE_TESTING
     RigidStateEstimator::Core ${rigid_state_gtest} pthread)
   add_test(NAME rigid_state_core COMMAND ${PROJECT_NAME}_core_test)
   if(RIGID_STATE_BUILD_NATIVE)
+    # FindPython3 requires CMake 3.12 only for the native test targets.
+    cmake_minimum_required(VERSION 3.12)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     add_executable(rigid_state_reference_replay native/reference_replay.cpp)
     target_link_libraries(rigid_state_reference_replay PRIVATE RigidStateEstimator::Core)
