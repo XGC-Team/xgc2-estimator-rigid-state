@@ -100,21 +100,24 @@ install(EXPORT RigidStateEstimatorTargets NAMESPACE RigidStateEstimator::
 
 if(RIGID_STATE_BUILD_TESTING OR (RIGID_STATE_BUILD_ROS AND CATKIN_ENABLE_TESTING))
   enable_testing()
-  find_package(GTest REQUIRED)
-  if(TARGET GTest::gtest)
-    set(rigid_state_gtest GTest::gtest)
-  else()
-    set(rigid_state_gtest GTest::GTest)
-  endif()
   set(rigid_state_core_tests test/vrpn_px4_rotor_state_estimator_test.cpp
     test/rigid_state_input_timing_test.cpp test/vision_pose_publication_test.cpp)
   if(RIGID_STATE_BUILD_ROS)
+    # Catkin owns discovery, source builds and linking of its GTest target.
+    # Bionic's source-only libgtest-dev has no prebuilt libs for FindGTest.
     catkin_add_gtest(${PROJECT_NAME}_core_test ${rigid_state_core_tests})
   else()
+    find_package(GTest REQUIRED)
+    if(TARGET GTest::gtest)
+      set(rigid_state_gtest GTest::gtest)
+    else()
+      set(rigid_state_gtest GTest::GTest)
+    endif()
     add_executable(${PROJECT_NAME}_core_test ${rigid_state_core_tests})
+    target_link_libraries(${PROJECT_NAME}_core_test ${rigid_state_gtest})
   endif()
   target_link_libraries(${PROJECT_NAME}_core_test
-    RigidStateEstimator::Core ${rigid_state_gtest} pthread)
+    RigidStateEstimator::Core pthread)
   add_test(NAME rigid_state_core COMMAND ${PROJECT_NAME}_core_test)
   if(RIGID_STATE_BUILD_NATIVE)
     # FindPython3 requires CMake 3.12 only for the native test targets.
