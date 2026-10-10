@@ -20,9 +20,7 @@ test "$(rospack find rigid_state_estimator_msgs)" = "/opt/ros/${ROS_DISTRO}/shar
 test "$(rospack find estimator_vrpn_px4_rotor_state)" = "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state"
 test "$(rospack find estimator_vrpn_ugv_state)" = "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_ugv_state"
 test -f "/opt/ros/${ROS_DISTRO}/share/rigid_state_estimator_msgs/msg/RigidStateEstimate.msg"
-test -f "/opt/ros/${ROS_DISTRO}/share/rigid_state_estimator_msgs/msg/PlanarStateEstimate.msg"
 test -f "/opt/ros/${ROS_DISTRO}/include/rigid_state_estimator_msgs/RigidStateEstimate.h"
-test -f "/opt/ros/${ROS_DISTRO}/include/rigid_state_estimator_msgs/PlanarStateEstimate.h"
 python_msg=""
 for pyroot in \
   "/opt/ros/${ROS_DISTRO}/lib/python3/dist-packages" \
@@ -33,7 +31,6 @@ for pyroot in \
   fi
 done
 test -n "${python_msg}"
-test -f "${python_msg}/rigid_state_estimator_msgs/msg/_PlanarStateEstimate.py"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/config/vrpn_px4_rotor_state_estimator.yaml"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/config/vrpn_ugv_rigid_state_estimator.yaml"
 test -f "/opt/ros/${ROS_DISTRO}/share/estimator_vrpn_px4_rotor_state/launch/vrpn_px4_rotor_state_estimator.launch"
@@ -49,14 +46,11 @@ test -x "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state/request_highr
 test ! -e "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_ugv_state/vrpn_ugv_state_estimator_node"
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^uint8 estimator_state$'
 rosmsg show rigid_state_estimator_msgs/RigidStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
-rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^uint8 estimator_state$'
-rosmsg show rigid_state_estimator_msgs/PlanarStateEstimate | grep -q '^geometry_msgs/Vector3 angular_velocity$'
 msg_python="python3"
 if [[ "${ROS_DISTRO}" == "melodic" ]]; then
   msg_python="python2"
 fi
 "${msg_python}" - <<'PY'
-from rigid_state_estimator_msgs.msg import PlanarStateEstimate
 from rigid_state_estimator_msgs.msg import RigidStateEstimate
 
 msg = RigidStateEstimate()
@@ -64,10 +58,6 @@ msg.estimator_state = RigidStateEstimate.STATE_RUNNING
 msg.flags = 0
 assert msg.estimator_state == 3
 assert RigidStateEstimate.STATE_RUNNING == 3
-assert PlanarStateEstimate.STATE_RUNNING == 2
-planar = PlanarStateEstimate()
-planar.estimator_state = PlanarStateEstimate.STATE_RUNNING
-assert planar.estimator_state == PlanarStateEstimate.STATE_RUNNING
 PY
 roslaunch --files estimator_vrpn_px4_rotor_state vrpn_px4_rotor_state_estimator.launch >/tmp/xgc2-vrpn-px4-rotor-state-estimator-files.txt
 roslaunch --files estimator_vrpn_ugv_state vrpn_ugv_state_estimator.launch >/tmp/xgc2-vrpn-ugv-state-estimator-files.txt
