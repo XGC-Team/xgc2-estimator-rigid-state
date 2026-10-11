@@ -77,13 +77,13 @@ done < <(find "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state" \
 
 echo "Installed package check passed"
 
-WIRE_PATHS=(
-  "/opt/ros/${ROS_DISTRO}/include/estimator_vrpn_px4_rotor_state/native/rigid_state_wire_v1.h"
-  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfig.cmake"
-  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireConfigVersion.cmake"
-  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire/RigidStateNativeWireTargets.cmake"
-)
-for path in "${WIRE_PATHS[@]}"; do
-  test -f "${path}"
-  dpkg-query -S "${path}" | grep -Fxq "ros-${ROS_DISTRO}-xgc2-estimator-rigid-state: ${path}"
+# The retired native wire header and CMake package are in no package.
+for path in \
+  "/opt/ros/${ROS_DISTRO}/include/estimator_vrpn_px4_rotor_state/native" \
+  "/opt/ros/${ROS_DISTRO}/share/cmake/RigidStateNativeWire"
+do
+  if [[ -e "${path}" ]]; then
+    echo "retired file is installed: ${path}" >&2
+    exit 1
+  fi
 done
