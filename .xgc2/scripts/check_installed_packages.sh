@@ -75,6 +75,8 @@ done < <(find "/opt/ros/${ROS_DISTRO}/lib/estimator_vrpn_px4_rotor_state" \
   "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_core.so" \
   "/opt/ros/${ROS_DISTRO}/lib/libestimator_vrpn_px4_rotor_state_ros.so" -type f 2>/dev/null | sort -u)
 
+bash "$(dirname "${BASH_SOURCE[0]}")/check_installed_core.sh"
+
 echo "Installed package check passed"
 
 # The retired native wire header and CMake package are in no package.

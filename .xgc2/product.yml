@@ -51,12 +51,14 @@ ownership:
   - /opt/ros/melodic/lib/estimator_vrpn_px4_rotor_state
   - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_core.so
   - /opt/ros/melodic/lib/libestimator_vrpn_px4_rotor_state_ros.so
+  - /opt/ros/melodic/lib/cmake/RigidStateEstimator
   - /opt/ros/melodic/share/estimator_vrpn_ugv_state
   - /opt/ros/noetic/share/estimator_vrpn_px4_rotor_state
   - /opt/ros/noetic/include/estimator_vrpn_px4_rotor_state
   - /opt/ros/noetic/lib/estimator_vrpn_px4_rotor_state
   - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_core.so
   - /opt/ros/noetic/lib/libestimator_vrpn_px4_rotor_state_ros.so
+  - /opt/ros/noetic/lib/cmake/RigidStateEstimator
   - /opt/ros/noetic/share/estimator_vrpn_ugv_state
 release:
   dependency_policy:

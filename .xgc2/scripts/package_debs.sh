@@ -53,6 +53,19 @@ fi
 ARCH="$(dpkg --print-architecture)"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 PREFIX_ROOT="${INSTALL_ROOT}${PREFIX}"
+# The ROS-free core is a product-owned CMake interface, not just a shared object.
+CORE_CMAKE_DIR="${PREFIX_ROOT}/lib/cmake/RigidStateEstimator"
+for config in RigidStateEstimatorConfig.cmake RigidStateEstimatorConfigVersion.cmake \
+  RigidStateEstimatorTargets.cmake; do
+  if [[ ! -f "${CORE_CMAKE_DIR}/${config}" ]]; then
+    echo "missing required installed core CMake export: ${CORE_CMAKE_DIR}/${config}" >&2
+    exit 1
+  fi
+done
+if ! compgen -G "${CORE_CMAKE_DIR}/RigidStateEstimatorTargets-*.cmake" >/dev/null; then
+  echo "missing installed core CMake target locations: ${CORE_CMAKE_DIR}" >&2
+  exit 1
+fi
 BUILD_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -91,6 +104,7 @@ done
 for ros_library in "${ROS_LIBRARIES[@]}"; do
   copy_path "${PREFIX_ROOT}/lib/${ros_library}" "${pkg_root}"
 done
+copy_path "${CORE_CMAKE_DIR}" "${pkg_root}"
 
 mkdir -p "${pkg_root}/DEBIAN" "${pkg_root}/usr/share/doc/${PACKAGE}"
 cat > "${pkg_root}/DEBIAN/control" <<EOF
